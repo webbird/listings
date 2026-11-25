@@ -1,10 +1,38 @@
-.lst-backend .lst-tabs { display: flex; gap: .25em; margin: 0 0 1em; border-bottom: 1px solid #ccc; }
-.lst-backend .lst-tabs a { padding: .45em .9em; border: 1px solid transparent; border-bottom: 0; text-decoration: none; }
-.lst-backend .lst-tabs a.active { border-color: #ccc; background: #fff; margin-bottom: -1px; font-weight: 600; }
-.lst-backend .lst-toolbar { display: flex; flex-wrap: wrap; gap: 1em; align-items: center; margin: 0 0 1em; }
-.lst-backend .lst-filter a { margin-right: .75em; }
-.lst-backend .lst-filter a.active { font-weight: 600; }
-.lst-backend .lst-button { display: inline-block; padding: .4em .9em; border: 1px solid #888; border-radius: 3px; text-decoration: none; }
+/*
+ * listings – backend styles. Scoped to .lst-backend; head, tabs, buttons and
+ * messages follow articles, so the modules look alike.
+ */
+.lst-backend { --lst-line: #d6dae0; --lst-muted: #5f6672; --lst-accent: #314b68; margin: 0 0 1.5em; }
+/* display rules below would otherwise override the hidden attribute */
+.lst-backend [hidden] { display: none !important; }
+.lst-backend .lst-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.lst-backend .lst-head { display: flex; flex-wrap: wrap; gap: .5em 1em; align-items: flex-end; border-bottom: 1px solid var(--lst-line); margin: 0 0 1em; }
+.lst-backend .lst-tabs { display: flex; flex-wrap: wrap; gap: .25em; flex: 1; }
+.lst-backend .lst-tabs a { padding: .5em .9em; text-decoration: none; color: var(--lst-muted); border-bottom: 3px solid transparent; }
+.lst-backend .lst-tabs a[aria-current="page"] { color: inherit; border-bottom-color: var(--lst-accent); font-weight: bold; }
+.lst-backend .lst-count { font-size: .85em; color: var(--lst-muted); font-weight: normal; }
+.lst-backend .lst-head-actions { display: flex; gap: .5em; padding-bottom: .4em; }
+
+.lst-backend .lst-button { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: .35em .9em; border: 1px solid #9aa3ad; border-radius: 4px; background: #fff; color: inherit; text-decoration: none; cursor: pointer; font: inherit; }
+.lst-backend .lst-button:hover { background: #f1f3f5; }
+.lst-backend .lst-button--primary { background: var(--lst-accent); border-color: var(--lst-accent); color: #fff; }
+.lst-backend .lst-button--primary:hover { background: #24384f; }
+/* themes such as Argos give every button a min-width and a bottom margin */
+.lst-backend :is(.lst-button, .lst-link-button) { min-width: 0; width: auto; margin: 0; text-transform: none; letter-spacing: normal; }
+
+.lst-backend .lst-message { padding: .6em 1em; margin: 0 0 1em; border-left: 4px solid; }
+.lst-backend .lst-message ul { margin: .3em 0 0; padding-left: 1.2em; }
+.lst-backend .lst-message.lst-error { background: #fbeaea; border-color: #a32d2d; color: #5c1414; }
+.lst-backend .lst-message.lst-success { background: #e8f3ea; border-color: #2d7a3e; color: #173d1f; }
+
+/* status filter of the entries, below the tabs */
+.lst-backend .lst-filter { display: flex; flex-wrap: wrap; gap: .25em 1.25em; margin: 0 0 1em; }
+.lst-backend .lst-filter a { text-decoration: none; color: var(--lst-muted); }
+.lst-backend .lst-filter a[aria-current="page"] { color: inherit; font-weight: bold; }
+.lst-backend .lst-filter a.lst-waiting { color: inherit; }
+/* a marked row as an edge stripe, not as a background */
+.lst-backend .lst-row-waiting td:first-child { box-shadow: inset 3px 0 0 var(--lst-accent); }
 .lst-backend .lst-table { width: 100%; border-collapse: collapse; }
 .lst-backend .lst-table th, .lst-backend .lst-table td { padding: .4em .5em; border-bottom: 1px solid #e3e3e3; text-align: left; vertical-align: middle; }
 .lst-backend .lst-heading-row td { background: #f6f6f6; font-weight: 600; }
@@ -30,15 +58,9 @@
 .lst-backend fieldset { margin: 1.5em 0; padding: .5em 1em 1em; border: 1px solid #ddd; }
 .lst-backend .lst-code { width: 100%; font-family: Consolas, Menlo, monospace; font-size: 13px; line-height: 1.45; tab-size: 4; }
 .lst-backend .lst-buttons { display: flex; gap: 1em; align-items: center; margin: 1.5em 0 0; }
-.lst-backend [hidden] { display: none !important; }
 @media (max-width: 700px) { .lst-backend .lst-row { grid-template-columns: 1fr; } }
 .lst-backend .lst-status-pending { background: #fff1cc; }
 .lst-backend .lst-status-rejected { background: #f8dede; }
-.lst-backend .lst-row-waiting td { background: #fffaf0; }
-.lst-backend .lst-filter a.lst-waiting { font-weight: 600; }
 .lst-backend .lst-actions .lst-button { padding: .15em .6em; margin-right: .25em; cursor: pointer; background: #fff; font: inherit; }
 .lst-backend .lst-actions .lst-approve { border-color: #3a8a4a; color: #2c6b38; }
 .lst-backend .lst-actions .lst-reject { border-color: #b33; color: #a22; }
-.lst-backend .lst-message { margin: 0 0 1em; padding: .6em .9em; border-left: 3px solid #3a8a4a; background: #eef7ef; }
-.lst-backend .lst-message.lst-error { border-left-color: #b33; background: #fbeeee; }
-.lst-backend .lst-message ul { margin: 0; padding-left: 1.2em; }

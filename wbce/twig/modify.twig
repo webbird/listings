@@ -1,13 +1,21 @@
 {#
-    listings/twig/modify.twig – frame of the backend views: tabs, messages, content
+    listings/twig/modify.twig – frame of the backend views: tabs and main action (as in articles), messages, content
 #}
 {% set tabs = {items: ['TAB_ITEMS', ['item']], fields: ['TAB_FIELDS', ['field']], layouts: ['TAB_LAYOUTS', []], settings: ['TAB_SETTINGS', []]} %}
-<div class="mod_listings lst-backend">
-    <nav class="lst-tabs">
-        {% for tab, def in tabs %}
-            <a href="{{ url({lst_view: tab}) }}"{% if view == tab or view in def[1] %} class="active"{% endif %}>{{ t(def[0]) }}</a>
-        {% endfor %}
-    </nav>
+<div class="mod_listings lst-backend" data-lst-section="{{ section_id }}">
+    <div class="lst-head">
+        <nav class="lst-tabs" aria-label="{{ t('TABS') }}">
+            {% for tab, def in tabs %}
+                <a href="{{ url({lst_view: tab}) }}"{% if view == tab or view in def[1] %} aria-current="page"{% endif %}>
+                    {{- t(def[0]) -}}
+                    {% if tab == 'items' and waiting > 0 %}
+                        <span class="lst-count" aria-hidden="true">{{ waiting }}</span><span class="lst-sr">({{ t('WAITING_COUNT', waiting) }})</span>
+                    {%- endif -%}
+                </a>
+            {% endfor %}
+        </nav>
+        <div class="lst-head-actions">{% block actions %}{% endblock %}</div>
+    </div>
     {% include '_messages.twig' %}
     {% block content %}{% endblock %}
 </div>

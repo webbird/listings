@@ -2,10 +2,10 @@
     listings/twig/modify_fields.twig – the field set of the directory in the order of the form
 #}
 {% extends 'modify.twig' %}
+{% block actions %}
+    <a class="lst-button lst-button--primary" href="{{ url({lst_view: 'field'}) }}">{{ t('NEW_FIELD') }}</a>
+{% endblock %}
 {% block content %}
-<div class="lst-toolbar">
-    <a class="lst-button" href="{{ url({lst_view: 'field'}) }}">{{ t('NEW_FIELD') }}</a>
-</div>
 <p class="lst-hint">{{ t('HINT_FIELDS') }}</p>
 
 {% if fields is empty %}

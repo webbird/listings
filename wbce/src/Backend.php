@@ -38,6 +38,8 @@ final class Backend
             'errors'     => is_array($flash['errors'] ?? null) ? $flash['errors'] : [],
             'old'        => is_array($flash['old'] ?? null) ? $flash['old'] : null,
             'now'        => time(),
+            // shown at the tab "Entries" in every view
+            'waiting'    => Items::count($sectionId, 'pending'),
         ];
 
         $vars['fields'] = Fields::forSection($sectionId);
