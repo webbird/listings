@@ -12,7 +12,7 @@ defined('WB_PATH') or die('This file cannot be accessed directly!');
 
 final class Backend
 {
-    public const VIEWS = ['items', 'item', 'fields', 'field', 'layouts', 'settings'];
+    public const VIEWS = ['items', 'item', 'fields', 'field', 'categories', 'category', 'layouts', 'settings'];
 
     public const ITEMS_PER_PAGE = 50;
 
@@ -85,6 +85,36 @@ final class Backend
                     'expires' => ($item['expires_at'] ?? 0) > 0 ? date('Y-m-d', $item['expires_at']) : '',
                     'fields'  => $item['data'] ?? [],
                 ];
+                $assigned = $item === null ? ['categories' => [], 'tags' => []] : Taxonomy::forItems($sectionId, [$item['item_id']])[$item['item_id']];
+                $vars['form'] += [
+                    'categories' => array_column($assigned['categories'], 'cat_id'),
+                    'tags'       => implode(', ', array_column($assigned['tags'], 'name')),
+                ];
+                $vars['categories'] = Taxonomy::categories($sectionId);
+                $vars['tag_names'] = array_column(Taxonomy::tags($sectionId), 'name');
+                break;
+
+            case 'categories':
+                $counts = Taxonomy::categoryCounts($sectionId);
+                $vars['categories'] = array_map(static fn ($c) => $c + ['count' => $counts[$c['cat_id']] ?? 0], Taxonomy::categories($sectionId));
+                $vars['tags'] = Taxonomy::tags($sectionId);
+                $vars['tags_mode'] = Settings::load($sectionId)['tags_mode'];
+                break;
+
+            case 'category':
+                $cat = (int) $param('lst_cat') > 0 ? Taxonomy::findCategory($sectionId, (int) $param('lst_cat')) : null;
+                $tree = Taxonomy::categories($sectionId);
+                // not below itself or its own subcategories
+                $exclude = $cat === null ? [] : Taxonomy::withDescendants($tree, $cat['cat_id']);
+                $vars['category'] = $cat;
+                $vars['parents'] = array_values(array_filter($tree, static fn ($c) => !in_array($c['cat_id'], $exclude, true)));
+                $vars['form'] = $vars['old'] ?? [
+                    'name'        => $cat['name'] ?? '',
+                    'slug'        => $cat['slug'] ?? '',
+                    'parent_id'   => (string) ($cat['parent_id'] ?? (int) $param('lst_parent')),
+                    'description' => $cat['description'] ?? '',
+                    'visible'     => (string) ($cat['visible'] ?? 1),
+                ];
                 break;
 
             case 'field':
@@ -103,6 +133,7 @@ final class Backend
                     'visibility' => $field['visibility'] ?? 'public',
                     'in_list'    => (string) ($field['in_list'] ?? 0),
                     'editable'   => (string) ($field['editable'] ?? 1),
+                    'filterable' => (string) ($field['filterable'] ?? 0),
                     'choices'    => $field === null ? '' : Fields::choicesText($field),
                     'maxlength'  => (string) ($field['options']['maxlength'] ?? ''),
                     'min'        => (string) ($field['options']['min'] ?? ''),
@@ -133,6 +164,8 @@ final class Backend
                 $vars['owner_modes'] = Settings::OWNER_MODES;
                 $vars['login_available'] = defined('FRONTEND_LOGIN') && FRONTEND_LOGIN;
                 $vars['runtime_max'] = Settings::RUNTIME_MAX;
+                $vars['tag_modes'] = Taxonomy::TAG_MODES;
+                $vars['rss_url'] = WB_URL . '/modules/' . Module::DIR . '/rss.php?section_id=' . $sectionId;
                 break;
         }
 

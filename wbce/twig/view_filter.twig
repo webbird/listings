@@ -1,0 +1,42 @@
+{#
+    listings/twig/view_filter.twig – search and filter above the list. A GET form:
+    the result is a link that can be bookmarked and shared.
+#}
+<form method="get" action="{{ action }}" class="lst-filter-form" role="search" aria-label="{{ t('FILTER') }}">
+    {% for key, value in keep %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+    <div class="lst-filter-row">
+        <label for="lst_q_{{ section_id }}">{{ t('SEARCH') }}</label>
+        <input type="search" id="lst_q_{{ section_id }}" name="{{ name }}[q]" maxlength="100" value="{{ values.q|default('') }}">
+    </div>
+    {% if categories is not empty %}
+    <div class="lst-filter-row">
+        <label for="lst_c_{{ section_id }}">{{ t('CATEGORY') }}</label>
+        <select id="lst_c_{{ section_id }}" name="{{ name }}[c]">
+            <option value="">{{ t('ALL') }}</option>
+            {% for c in categories %}<option value="{{ c.slug }}"{% if values.c|default('') == c.slug %} selected{% endif %}>{{ c.prefix }}{{ c.name }}</option>{% endfor %}
+        </select>
+    </div>
+    {% endif %}
+    {% if tags is not empty %}
+    <div class="lst-filter-row">
+        <label for="lst_t_{{ section_id }}">{{ t('TAG') }}</label>
+        <select id="lst_t_{{ section_id }}" name="{{ name }}[t]">
+            <option value="">{{ t('ALL') }}</option>
+            {% for tag in tags %}<option value="{{ tag.slug }}"{% if values.t|default('') == tag.slug %} selected{% endif %}>{{ tag.name }}</option>{% endfor %}
+        </select>
+    </div>
+    {% endif %}
+    {% for f in fields %}
+    <div class="lst-filter-row">
+        <label for="lst_ff_{{ section_id }}_{{ f.name }}">{{ f.label }}</label>
+        <select id="lst_ff_{{ section_id }}_{{ f.name }}" name="{{ name }}[{{ f.name }}]">
+            <option value="">{{ t('ALL') }}</option>
+            {% for c in f.options.choices|default([]) %}<option value="{{ c.value }}"{% if values[f.name]|default('') == c.value %} selected{% endif %}>{{ c.label }}</option>{% endfor %}
+        </select>
+    </div>
+    {% endfor %}
+    <div class="lst-filter-row lst-filter-buttons">
+        <button type="submit">{{ t('FILTER_APPLY') }}</button>
+        {% if reset_url %}<a href="{{ reset_url }}">{{ t('FILTER_RESET') }}</a>{% endif %}
+    </div>
+</form>

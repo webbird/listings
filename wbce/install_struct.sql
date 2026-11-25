@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS `{TP}mod_listings_fields` (
     `visibility` VARCHAR(10) NOT NULL DEFAULT 'public',
     `in_list`    TINYINT NOT NULL DEFAULT 0,
     `editable`   TINYINT NOT NULL DEFAULT 1,
+    `filterable` TINYINT NOT NULL DEFAULT 0,
     `options`    TEXT NULL,
     PRIMARY KEY (`field_id`),
     UNIQUE KEY `section_name` (`section_id`, `name`),
@@ -62,4 +63,46 @@ CREATE TABLE IF NOT EXISTS `{TP}mod_listings_tokens` (
     UNIQUE KEY `token_hash` (`token_hash`),
     KEY `section_email` (`section_id`, `email`),
     KEY `item_id` (`item_id`)
+) {TABLE_ENGINE};
+
+-- 0.4: a tree of categories and free tags per directory; an entry may have several of each
+CREATE TABLE IF NOT EXISTS `{TP}mod_listings_categories` (
+    `cat_id`      INT NOT NULL AUTO_INCREMENT,
+    `section_id`  INT NOT NULL DEFAULT 0,
+    `parent_id`   INT NOT NULL DEFAULT 0,
+    `position`    INT NOT NULL DEFAULT 0,
+    `name`        VARCHAR(255) NOT NULL DEFAULT '',
+    `slug`        VARCHAR(190) NOT NULL DEFAULT '',
+    `description` TEXT NULL,
+    `visible`     TINYINT NOT NULL DEFAULT 1,
+    PRIMARY KEY (`cat_id`),
+    UNIQUE KEY `section_slug` (`section_id`, `slug`),
+    KEY `section_parent` (`section_id`, `parent_id`, `position`)
+) {TABLE_ENGINE};
+
+CREATE TABLE IF NOT EXISTS `{TP}mod_listings_item_categories` (
+    `section_id` INT NOT NULL DEFAULT 0,
+    `item_id`    INT NOT NULL DEFAULT 0,
+    `cat_id`     INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`item_id`, `cat_id`),
+    KEY `cat_id` (`cat_id`),
+    KEY `section_id` (`section_id`)
+) {TABLE_ENGINE};
+
+CREATE TABLE IF NOT EXISTS `{TP}mod_listings_tags` (
+    `tag_id`     INT NOT NULL AUTO_INCREMENT,
+    `section_id` INT NOT NULL DEFAULT 0,
+    `name`       VARCHAR(100) NOT NULL DEFAULT '',
+    `slug`       VARCHAR(120) NOT NULL DEFAULT '',
+    PRIMARY KEY (`tag_id`),
+    UNIQUE KEY `section_slug` (`section_id`, `slug`)
+) {TABLE_ENGINE};
+
+CREATE TABLE IF NOT EXISTS `{TP}mod_listings_item_tags` (
+    `section_id` INT NOT NULL DEFAULT 0,
+    `item_id`    INT NOT NULL DEFAULT 0,
+    `tag_id`     INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`item_id`, `tag_id`),
+    KEY `tag_id` (`tag_id`),
+    KEY `section_id` (`section_id`)
 ) {TABLE_ENGINE};

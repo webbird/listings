@@ -20,21 +20,25 @@ final class Items
     /** Entries added in the frontend and not confirmed within this time are deleted. */
     public const UNCONFIRMED_TTL = 172800;
 
-    public static function count(int $sectionId, ?string $status = null, bool $visibleOnly = false): int
+    /**
+     * @param array<string, mixed> $filter see where()
+     */
+    public static function count(int $sectionId, ?string $status = null, bool $visibleOnly = false, array $filter = []): int
     {
         global $database;
-        [$where, $params] = self::where($sectionId, $status, $visibleOnly);
+        [$where, $params] = self::where($sectionId, $status, $visibleOnly, $filter);
         return (int) $database->fetchValue('SELECT COUNT(*) FROM `' . self::TABLE . '` WHERE ' . $where, $params);
     }
 
     /**
      * @param string $orderBy one of Settings::SORTS — never request data
+     * @param array<string, mixed> $filter see where()
      * @return list<array<string, mixed>>
      */
-    public static function list(int $sectionId, ?string $status, bool $visibleOnly, string $orderBy, int $limit, int $offset): array
+    public static function list(int $sectionId, ?string $status, bool $visibleOnly, string $orderBy, int $limit, int $offset, array $filter = []): array
     {
         global $database;
-        [$where, $params] = self::where($sectionId, $status, $visibleOnly);
+        [$where, $params] = self::where($sectionId, $status, $visibleOnly, $filter);
         $rows = $database->fetchAll(
             'SELECT * FROM `' . self::TABLE . '` WHERE ' . $where . ' ORDER BY ' . $orderBy . ' LIMIT ? OFFSET ?',
             array_merge($params, [$limit, $offset])
@@ -336,6 +340,7 @@ final class Items
             return false;
         }
         Tokens::deleteForItem($itemId);
+        Taxonomy::deleteForItem($sectionId, $itemId);
         return true;
     }
 
@@ -361,10 +366,20 @@ final class Items
     }
 
     /**
+     * The filter is built by View from checked request data:
+     *   cats   list<int>  in one of these categories
+     *   tag    int        has this tag
+     *   q      string     words in the title or in one of q_fields (public text fields)
+     *   fields list<array{name: string, multi: bool, value: string}>  value of a choice field,
+     *          the value taken from the field's choices, never from the request directly
+     *
+     * @param array<string, mixed> $filter
      * @return array{0: string, 1: list<mixed>}
      */
-    private static function where(int $sectionId, ?string $status, bool $visibleOnly): array
+    private static function where(int $sectionId, ?string $status, bool $visibleOnly, array $filter = []): array
     {
+        global $database;
+        $outer = '`' . self::TABLE . '`.`item_id`';
         $where = '`section_id` = ?';
         $params = [$sectionId];
         if ($visibleOnly) {
@@ -375,6 +390,43 @@ final class Items
         if ($status !== null) {
             $where .= ' AND `status` = ?';
             $params[] = $status;
+        }
+        $cats = array_values(array_map('intval', $filter['cats'] ?? []));
+        if ($cats !== []) {
+            $where .= ' AND EXISTS (SELECT 1 FROM `{TP}mod_listings_item_categories` ic WHERE ic.`item_id` = ' . $outer
+                . ' AND ic.`cat_id` IN (' . implode(',', array_fill(0, count($cats), '?')) . '))';
+            array_push($params, ...$cats);
+        }
+        if ((int) ($filter['tag'] ?? 0) > 0) {
+            $where .= ' AND EXISTS (SELECT 1 FROM `{TP}mod_listings_item_tags` it WHERE it.`item_id` = ' . $outer . ' AND it.`tag_id` = ?)';
+            $params[] = (int) $filter['tag'];
+        }
+        foreach ($filter['fields'] ?? [] as $f) {
+            if (preg_match('/^[a-z][a-z0-9_]*$/', $f['name']) !== 1) {
+                continue;
+            }
+            if ($f['multi']) {
+                // the value is one of the field's choices; jsonArrayContains() puts it into the SQL
+                $where .= ' AND ' . $database->jsonArrayContains('data', '$.' . $f['name'], (string) $f['value']);
+            } else {
+                $where .= ' AND ' . $database->jsonGet('data', '$.' . $f['name']) . ' = ?';
+                $params[] = (string) $f['value'];
+            }
+        }
+        $q = trim((string) ($filter['q'] ?? ''));
+        if ($q !== '') {
+            foreach (preg_split('/\s+/u', mb_substr($q, 0, 100)) ?: [] as $word) {
+                $like = '%' . addcslashes($word, '%_\\') . '%';
+                $parts = ['`title` LIKE ?'];
+                $params[] = $like;
+                foreach ($filter['q_fields'] ?? [] as $name) {
+                    if (preg_match('/^[a-z][a-z0-9_]*$/', $name) === 1) {
+                        $parts[] = $database->jsonGet('data', '$.' . $name) . ' LIKE ?';
+                        $params[] = $like;
+                    }
+                }
+                $where .= ' AND (' . implode(' OR ', $parts) . ')';
+            }
         }
         return [$where, $params];
     }

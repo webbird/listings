@@ -23,3 +23,17 @@
 .mod_listings .lst-delete { margin-top: 2em; }
 /* the honeypot: out of sight for people, still filled in by bots */
 .mod_listings .lst-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+/* 0.4: filter, categories, tags */
+.mod_listings .lst-filter-form { display: flex; flex-wrap: wrap; gap: .75em 1em; align-items: flex-end; margin: 0 0 1.5em; padding: .75em 1em; background: rgba(0, 0, 0, .03); }
+.mod_listings .lst-filter-row { display: flex; flex-direction: column; gap: .2em; }
+.mod_listings .lst-filter-row label { font-size: .875em; font-weight: 600; }
+.mod_listings .lst-filter-buttons { flex-direction: row; align-items: center; gap: 1em; }
+.mod_listings .lst-item-categories { margin: 0 0 .4em; font-size: .875em; }
+.mod_listings .lst-item-tags { margin: .4em 0; }
+.mod_listings .lst-tag { display: inline-block; margin: 0 .3em .3em 0; padding: .05em .6em; border-radius: 1em; background: rgba(0, 0, 0, .06); font-size: .85em; text-decoration: none; }
+.mod_listings .lst-cat-choices, .mod_listings .lst-tag-choices { border: 0; padding: 0; margin: 0 0 1em; }
+.mod_listings .lst-cat-choices legend, .mod_listings .lst-tag-choices legend { font-weight: 600; margin-bottom: .2em; padding: 0; }
+.mod_listings .lst-cat-choices label, .mod_listings .lst-tag-choices label { display: block; font-weight: 400; }
+.mod_listings .lst-level-1 { padding-left: 1.25em; }
+.mod_listings .lst-level-2 { padding-left: 2.5em; }
+.mod_listings .lst-level-3, .mod_listings .lst-level-4 { padding-left: 3.75em; }

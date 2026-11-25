@@ -1,0 +1,50 @@
+{#
+    listings/twig/modify_category.twig – add or edit a category
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<h3>{{ category is null ? t('NEW_CATEGORY') : t('EDIT_CATEGORY', category.name) }}</h3>
+<form method="post" action="{{ action }}" class="lst-form">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="category_save">
+    {% if category is not null %}<input type="hidden" name="lst_cat" value="{{ idkey('category', category.cat_id) }}">{% endif %}
+
+    <div class="lst-row">
+        <label for="lst_cat_name">{{ t('CATEGORY_NAME') }} *</label>
+        <div><input type="text" id="lst_cat_name" name="name" maxlength="255" required value="{{ form.name }}"></div>
+    </div>
+    <div class="lst-row">
+        <label for="lst_cat_parent">{{ t('CATEGORY_PARENT') }}</label>
+        <div>
+            <select id="lst_cat_parent" name="parent_id">
+                <option value="0">{{ t('CATEGORY_TOP') }}</option>
+                {% for p in parents %}
+                    <option value="{{ p.cat_id }}"{% if form.parent_id == p.cat_id ~ '' %} selected{% endif %}>{{ p.prefix }}{{ p.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="lst-row">
+        <label for="lst_cat_slug">{{ t('SLUG') }}</label>
+        <div>
+            <input type="text" id="lst_cat_slug" name="slug" maxlength="110" value="{{ form.slug }}" aria-describedby="lst_cat_slug_help">
+            <p class="lst-help" id="lst_cat_slug_help">{{ t('HELP_CATEGORY_SLUG') }}</p>
+        </div>
+    </div>
+    <div class="lst-row">
+        <label for="lst_cat_desc">{{ t('CATEGORY_DESCRIPTION') }}</label>
+        <div><textarea id="lst_cat_desc" name="description" rows="4" maxlength="5000">{{ form.description }}</textarea></div>
+    </div>
+    <div class="lst-row">
+        <span class="lst-label">{{ t('CATEGORY_VISIBLE') }}</span>
+        <div>
+            <label><input type="checkbox" name="visible" value="1"{% if form.visible == '1' %} checked{% endif %}> {{ t('CATEGORY_VISIBLE_ON') }}</label>
+        </div>
+    </div>
+
+    <div class="lst-buttons">
+        <button type="submit">{{ L_('TEXT:SAVE') }}</button>
+        <a href="{{ url({lst_view: 'categories'}) }}">{{ L_('TEXT:CANCEL') }}</a>
+    </div>
+</form>
+{% endblock %}

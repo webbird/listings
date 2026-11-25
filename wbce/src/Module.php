@@ -57,6 +57,53 @@ final class Module
         return $twig;
     }
 
+    /**
+     * URL of a page from its stored link, without a $wb object: search
+     * indexing, feeds and link tokens may run without one.
+     */
+    public static function pageUrl(int $pageId): string
+    {
+        global $database;
+        $link = (string) $database->fetchValue('SELECT `link` FROM `{TP}pages` WHERE `page_id` = ?', [$pageId]);
+        return $link === '' ? '' : WB_URL . PAGES_DIRECTORY . $link . PAGE_EXTENSION;
+    }
+
+    /**
+     * Plain text of an entry for search and feeds: title, public field
+     * values, categories and tags. Hidden fields never appear.
+     *
+     * @param list<array<string, mixed>> $publicFields
+     * @param array{categories: list<array>, tags: list<array>} $tax
+     * @return list<array{label: string, value: string}>
+     */
+    public static function publicValues(array $item, array $publicFields, array $tax, bool $tagsOn): array
+    {
+        $lines = [];
+        foreach ($publicFields as $field) {
+            $value = FieldTypes::display($field, $item['data'][$field['name']] ?? null);
+            if ($value !== '') {
+                $lines[] = ['label' => $field['label'], 'value' => $value];
+            }
+        }
+        $cats = array_column(array_filter($tax['categories'], static fn ($c) => $c['visible']), 'name');
+        if ($cats !== []) {
+            $lines[] = ['label' => self::t('CATEGORIES'), 'value' => implode(', ', $cats)];
+        }
+        if ($tagsOn && $tax['tags'] !== []) {
+            $lines[] = ['label' => self::t('TAGS'), 'value' => implode(', ', array_column($tax['tags'], 'name'))];
+        }
+        return $lines;
+    }
+
+    /** @return list<array<string, mixed>> the fields visitors see */
+    public static function publicFields(int $sectionId): array
+    {
+        return array_values(array_filter(
+            Fields::forSection($sectionId),
+            static fn ($f) => $f['visibility'] === 'public' && FieldTypes::stores($f['type'])
+        ));
+    }
+
     public static function saveUrl(): string
     {
         return WB_URL . '/modules/' . self::DIR . '/save.php';
@@ -119,7 +166,7 @@ final class Module
     public static function deleteSection(int $sectionId): void
     {
         global $database;
-        foreach (['tokens', 'items', 'fields', 'settings'] as $table) {
+        foreach (['item_tags', 'tags', 'item_categories', 'categories', 'tokens', 'items', 'fields', 'settings'] as $table) {
             $database->deleteRow('{TP}mod_listings_' . $table, 'section_id', $sectionId);
             if ($database->hasError()) {
                 trigger_error('Listings: ' . $database->getError(), E_USER_WARNING);

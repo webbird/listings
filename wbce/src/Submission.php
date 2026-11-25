@@ -82,7 +82,7 @@ final class Submission
             'owner_email' => $this->post('owner_email'),
             'privacy'     => $this->post('privacy'),
             'fields'      => is_array($_POST['fields'] ?? null) ? $_POST['fields'] : [],
-        ];
+        ] + $this->taxonomyInput();
         // a logged-in owner has proven to be a person already
         $this->checkHuman($formUrl, $old, $this->user === null);
 
@@ -113,7 +113,7 @@ final class Submission
             $values['status'] = $approval ? 'pending' : 'published';
             $values['owner_user_id'] = $this->user['id'];
             $itemId = Items::save($this->sectionId, $this->pageId, null, $values, $this->user['id']);
-            if ($itemId === null) {
+            if ($itemId === null || !$this->assign($itemId)) {
                 $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $formUrl, $old);
             }
             $saved = ['item_id' => $itemId] + $values;
@@ -126,7 +126,7 @@ final class Submission
 
         $values['status'] = 'draft';
         $itemId = Items::save($this->sectionId, $this->pageId, null, $values, 0);
-        $token = $itemId === null ? null : Tokens::create($this->sectionId, $itemId, Tokens::CONFIRM, $values['owner_email']);
+        $token = $itemId === null || !$this->assign($itemId) ? null : Tokens::create($this->sectionId, $itemId, Tokens::CONFIRM, $values['owner_email']);
         if ($token === null) {
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $formUrl, $old);
         }
@@ -184,7 +184,7 @@ final class Submission
     private function update(): never
     {
         [$item, $editUrl] = $this->ownedItem();
-        $old = ['title' => $this->post('title'), 'fields' => is_array($_POST['fields'] ?? null) ? $_POST['fields'] : []];
+        $old = ['title' => $this->post('title'), 'fields' => is_array($_POST['fields'] ?? null) ? $_POST['fields'] : []] + $this->taxonomyInput();
 
         // the owner changes title and own fields; expiry and slug stay
         [$values, $errors] = Items::check($this->sectionId, Fields::forOwner(Fields::forSection($this->sectionId)), [
@@ -210,7 +210,8 @@ final class Submission
             // mails follow the address of the account, also after it changed
             $values['owner_email'] = $this->user['email'];
         }
-        if (Items::save($this->sectionId, $this->pageId, $item, $values, (int) ($this->user['id'] ?? 0)) === null) {
+        if (Items::save($this->sectionId, $this->pageId, $item, $values, (int) ($this->user['id'] ?? 0)) === null
+            || !$this->assign($item['item_id'])) {
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $editUrl, $old);
         }
         $nowWaiting = $status === 'pending' && $item['status'] !== 'pending';
@@ -327,6 +328,23 @@ final class Submission
             $this->fail([L_('MOD_LISTINGS:ERR_NOT_YOURS')], View::formUrl($this->pageUrl, $this->sectionId, 'mine'));
         }
         return [$item, View::ownerEditUrl($this->pageUrl, $this->sectionId, $item['item_id'])];
+    }
+
+    /** Categories and tags as sent, for the form after an error. */
+    private function taxonomyInput(): array
+    {
+        return [
+            'categories' => is_array($_POST['categories'] ?? null) ? array_filter($_POST['categories'], 'is_string') : [],
+            'tag_ids'    => is_array($_POST['tag_ids'] ?? null) ? array_filter($_POST['tag_ids'], 'is_string') : [],
+            'tags'       => $this->post('tags'),
+        ];
+    }
+
+    /** Stores the categories and tags the owner chose (visible categories, tags by the tag mode). */
+    private function assign(int $itemId): bool
+    {
+        [$cats, $tags] = Taxonomy::fromInput($this->sectionId, $_POST, $this->settings['tags_mode'] ?? 'off', false);
+        return Taxonomy::assign($this->sectionId, $itemId, $cats, $tags);
     }
 
     /** Honeypot, minimum time, captcha. */

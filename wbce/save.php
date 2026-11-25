@@ -19,6 +19,7 @@ use Listings\Layouts;
 use Listings\Mail;
 use Listings\Module;
 use Listings\Settings;
+use Listings\Taxonomy;
 
 $sectionId = (int) $section_id;
 $pageId = (int) $page_id;
@@ -70,10 +71,13 @@ switch ($post('lst_action')) {
                 'owner_email' => $post('owner_email'),
                 'expires' => $post('expires'),
                 'fields'  => is_array($_POST['fields'] ?? null) ? $_POST['fields'] : [],
+                'categories' => is_array($_POST['categories'] ?? null) ? $_POST['categories'] : [],
+                'tags'    => $post('tags'),
             ]);
         }
         $savedId = Items::save($sectionId, $pageId, $existing, $values, (int) $admin->get_user_id());
-        if ($savedId === null) {
+        [$cats, $tags] = Taxonomy::fromInput($sectionId, $_POST, Settings::load($sectionId)['tags_mode'], true);
+        if ($savedId === null || !Taxonomy::assign($sectionId, $savedId, $cats, $tags)) {
             $fail([$dbError], $formParams);
         }
         // the owner hears of a decision, also when it is taken in the form
@@ -124,7 +128,7 @@ switch ($post('lst_action')) {
         [$data, $errors] = Fields::check($sectionId, $_POST, $existing, $nameLocked);
         if ($errors !== []) {
             $old = [];
-            foreach (['label', 'name', 'type', 'help', 'required', 'visibility', 'in_list', 'editable', 'choices', 'maxlength', 'min', 'max'] as $key) {
+            foreach (['label', 'name', 'type', 'help', 'required', 'visibility', 'in_list', 'editable', 'filterable', 'choices', 'maxlength', 'min', 'max'] as $key) {
                 $old[$key] = $post($key);
             }
             $fail($errors, $formParams, $old);
@@ -194,8 +198,9 @@ switch ($post('lst_action')) {
             'owner_mode'   => in_array($post('owner_mode'), Settings::OWNER_MODES, true) ? $post('owner_mode') : 'email',
             'runtime_days' => $runtime,
             'remind_days'  => $remind,
+            'tags_mode'    => in_array($post('tags_mode'), Taxonomy::TAG_MODES, true) ? $post('tags_mode') : 'off',
         ];
-        foreach (['frontend', 'approval', 'recheck', 'captcha', 'contact'] as $flag) {
+        foreach (['frontend', 'approval', 'recheck', 'captcha', 'contact', 'filter_form', 'rss'] as $flag) {
             $values[$flag] = $post($flag) === '1' ? '1' : '0';
         }
         if ($errors !== []) {
@@ -208,6 +213,63 @@ switch ($post('lst_action')) {
             $fail([$dbError], ['lst_view' => 'settings']);
         }
         $done(L_('MOD_LISTINGS:SAVED_SETTINGS'), ['lst_view' => 'settings']);
+
+    case 'category_save':
+        $existing = null;
+        if (isset($_POST['lst_cat'])) {
+            $existing = Taxonomy::findCategory($sectionId, Module::checkId($admin, 'lst_cat', 'category'));
+            if ($existing === null) {
+                $fail([L_('MOD_LISTINGS:ERR_EXPIRED_FORM')], ['lst_view' => 'categories']);
+            }
+        }
+        $formParams = ['lst_view' => 'category'] + ($existing === null ? [] : ['lst_cat' => $existing['cat_id']]);
+        [$data, $errors] = Taxonomy::checkCategory($sectionId, $_POST, $existing);
+        if ($errors !== []) {
+            $old = [];
+            foreach (['name', 'slug', 'parent_id', 'description', 'visible'] as $key) {
+                $old[$key] = $post($key);
+            }
+            $fail($errors, $formParams, $old);
+        }
+        if (Taxonomy::saveCategory($sectionId, $existing, $data) === null) {
+            $fail([$dbError], $formParams);
+        }
+        $done(L_('MOD_LISTINGS:SAVED_CATEGORY', h($data['name'])), ['lst_view' => 'categories']);
+
+    case 'category_delete':
+    case 'category_move':
+        $cat = Taxonomy::findCategory($sectionId, Module::checkId($admin, 'lst_cat', 'category'));
+        if ($cat === null) {
+            $fail([L_('MOD_LISTINGS:ERR_EXPIRED_FORM')], ['lst_view' => 'categories']);
+        }
+        if ($post('lst_action') === 'category_move') {
+            if (!Taxonomy::moveCategory($sectionId, $cat, (int) $post('lst_dir'))) {
+                $fail([$dbError], ['lst_view' => 'categories']);
+            }
+            $back(['lst_view' => 'categories']);
+        }
+        if (!Taxonomy::deleteCategory($sectionId, $cat)) {
+            $fail([$dbError], ['lst_view' => 'categories']);
+        }
+        $done(L_('MOD_LISTINGS:DELETED_CATEGORY', h($cat['name'])), ['lst_view' => 'categories']);
+
+    case 'tag_rename':
+    case 'tag_delete':
+        $tag = Taxonomy::findTag($sectionId, Module::checkId($admin, 'lst_tag', 'tag'));
+        if ($tag === null) {
+            $fail([L_('MOD_LISTINGS:ERR_EXPIRED_FORM')], ['lst_view' => 'categories']);
+        }
+        if ($post('lst_action') === 'tag_rename') {
+            $error = Taxonomy::renameTag($sectionId, $tag, $post('name'));
+            if ($error !== null) {
+                $fail([$error], ['lst_view' => 'categories']);
+            }
+            $done(L_('MOD_LISTINGS:SAVED_TAG', h(trim($post('name')))), ['lst_view' => 'categories']);
+        }
+        if (!Taxonomy::deleteTag($sectionId, $tag)) {
+            $fail([$dbError], ['lst_view' => 'categories']);
+        }
+        $done(L_('MOD_LISTINGS:DELETED_TAG', h($tag['name'])), ['lst_view' => 'categories']);
 }
 
 $back([]);

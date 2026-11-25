@@ -1,7 +1,9 @@
 {# Listings – list layout
    ITEMS (loop): ID, TITLE, URL, CREATED, UPDATED, PUBLISHED, EXPIRES, every public field by name (e.g. ITEM.PHONE),
-                 FIELDS (loop of the fields marked "show in list": NAME, LABEL, TYPE, VALUE)
+                 FIELDS (loop of the fields marked "show in list": NAME, LABEL, TYPE, VALUE),
+                 CATEGORIES and TAGS (loops: NAME, URL to the filtered list)
    COUNT, PAGE, PAGES, PREV_URL, NEXT_URL, NOT_FOUND, LIST_URL,
+   FILTER (search and filter form), FILTERED, CATEGORY, CATEGORY_DESCRIPTION, TAG, RESET_URL, RSS_URL,
    NEW_URL, LINK_URL (empty unless visitors may add entries) #}
 <div class="mod_listings lst-list" id="lst-[SECTION_ID]">
     {if NOT_FOUND}
@@ -13,10 +15,21 @@
         · <a href="[LINK_URL]">[MOD_LISTINGS.REQUEST_LINK]</a>
     </p>
     {/if}
+    {if FILTER}[FILTER]{/if}
+
+    {if CATEGORY}
+    <h2 class="lst-category">[CATEGORY]</h2>
+    {if CATEGORY_DESCRIPTION}<p class="lst-category-description">[CATEGORY_DESCRIPTION|nl2br]</p>{/if}
+    {/if}
+    {if TAG}<p class="lst-active-tag">[MOD_LISTINGS.TAG]: [TAG]</p>{/if}
+    {if FILTERED}<p class="lst-count">[MOD_LISTINGS.FOUND]: [COUNT]</p>{/if}
 
     {foreach ITEMS as ITEM}
     <article class="lst-item">
         <h3 class="lst-item-title"><a href="[ITEM.URL]">[ITEM.TITLE]</a></h3>
+        {if ITEM.CATEGORIES}
+        <p class="lst-item-categories">{foreach ITEM.CATEGORIES as C}<a href="[C.URL]">[C.NAME]</a>{if not C._LAST}, {/if}{/foreach}</p>
+        {/if}
         {if ITEM.FIELDS}
         <dl class="lst-fields">
             {foreach ITEM.FIELDS as F}
@@ -25,10 +38,13 @@
             {/foreach}
         </dl>
         {/if}
+        {if ITEM.TAGS}
+        <p class="lst-item-tags">{foreach ITEM.TAGS as T}<a class="lst-tag" href="[T.URL]">[T.NAME]</a> {/foreach}</p>
+        {/if}
         <p class="lst-more"><a href="[ITEM.URL]">[MOD_LISTINGS.MORE]</a></p>
     </article>
     {else}
-    <p class="lst-empty">[MOD_LISTINGS.NO_ENTRIES]</p>
+    <p class="lst-empty">{if FILTERED}[MOD_LISTINGS.NO_MATCHES]{else}[MOD_LISTINGS.NO_ENTRIES]{/if}</p>
     {/foreach}
 
     {if PAGES > 1}
@@ -38,4 +54,5 @@
         {if NEXT_URL}<a class="lst-next" href="[NEXT_URL]">[MOD_LISTINGS.NEXT]</a>{/if}
     </nav>
     {/if}
+    {if RSS_URL}<p class="lst-rss"><a href="[RSS_URL]">RSS</a></p>{/if}
 </div>

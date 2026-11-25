@@ -7,7 +7,7 @@
 
 defined('WB_PATH') or die('This file cannot be accessed directly!');
 
-foreach (['tokens', 'items', 'fields', 'settings'] as $listingsTable) {
+foreach (['item_tags', 'tags', 'item_categories', 'categories', 'tokens', 'items', 'fields', 'settings'] as $listingsTable) {
     $database->query('DROP TABLE IF EXISTS `{TP}mod_listings_' . $listingsTable . '`');
     if ($database->hasError()) {
         log_err('Listings: ' . $database->getError());

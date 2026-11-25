@@ -32,6 +32,27 @@
         {% endif %}
     {% endfor %}
 
+    {% if categories is not empty %}
+    <fieldset class="lst-meta">
+        <legend>{{ t('CATEGORIES') }}</legend>
+        <div class="lst-cat-choices">
+            {% for c in categories %}
+                <label class="lst-level-{{ min(c.level, 4) }}"><input type="checkbox" name="categories[]" value="{{ c.cat_id }}"
+                    {%- if c.cat_id in form.categories|default([]) or (c.cat_id ~ '') in form.categories|default([]) %} checked{% endif %}> {{ c.name }}
+                    {%- if not c.visible %} <span class="lst-badge">{{ t('HIDDEN') }}</span>{% endif %}</label>
+            {% endfor %}
+        </div>
+    </fieldset>
+    {% endif %}
+    <div class="lst-row">
+        <label for="lst_tags">{{ t('TAGS') }}</label>
+        <div>
+            <input type="text" id="lst_tags" name="tags" maxlength="1000" list="lst_tag_list" value="{{ form.tags|default('') }}" aria-describedby="lst_tags_help">
+            <datalist id="lst_tag_list">{% for name in tag_names %}<option value="{{ name }}">{% endfor %}</datalist>
+            <p class="lst-help" id="lst_tags_help">{{ t('HELP_TAGS') }}</p>
+        </div>
+    </div>
+
     <fieldset class="lst-meta">
         <legend>{{ t('PUBLICATION') }}</legend>
         <div class="lst-row">

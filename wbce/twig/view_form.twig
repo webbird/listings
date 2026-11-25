@@ -59,6 +59,31 @@
             {% endif %}
         {% endfor %}
 
+        {% if categories is not empty %}
+        <fieldset class="lst-row lst-cat-choices">
+            <legend>{{ t('CATEGORIES') }}</legend>
+            {% for c in categories %}
+                <label class="lst-level-{{ min(c.level, 4) }}"><input type="checkbox" name="categories[]" value="{{ c.cat_id }}"
+                    {%- if c.cat_id in values.categories|default([]) or (c.cat_id ~ '') in values.categories|default([]) %} checked{% endif %}> {{ c.name }}</label>
+            {% endfor %}
+        </fieldset>
+        {% endif %}
+        {% if tags_mode == 'open' %}
+        <div class="lst-row">
+            <label for="lst_tags_{{ section_id }}">{{ t('TAGS') }}</label>
+            <input type="text" id="lst_tags_{{ section_id }}" name="tags" maxlength="1000" value="{{ values.tags|default('') }}" aria-describedby="lst_tags_help_{{ section_id }}">
+            <p class="lst-help" id="lst_tags_help_{{ section_id }}">{{ t('HELP_TAGS') }}</p>
+        </div>
+        {% elseif tags_mode == 'fixed' and all_tags is not empty %}
+        <fieldset class="lst-row lst-tag-choices">
+            <legend>{{ t('TAGS') }}</legend>
+            {% for tag in all_tags %}
+                <label><input type="checkbox" name="tag_ids[]" value="{{ tag.tag_id }}"
+                    {%- if tag.tag_id in values.tag_ids|default([]) or (tag.tag_id ~ '') in values.tag_ids|default([]) %} checked{% endif %}> {{ tag.name }}</label>
+            {% endfor %}
+        </fieldset>
+        {% endif %}
+
         {% if is_new %}
             {# the honeypot: out of sight for people, still filled in by bots #}
             <div class="lst-hp" aria-hidden="true">

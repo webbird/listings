@@ -21,6 +21,7 @@ final class View
     public const PARAM_CONFIRM = 'lst_confirm';
     public const PARAM_EDIT = 'lst_edit';
     public const PARAM_EXTEND = 'lst_extend';
+    public const PARAM_FILTER = 'lst_f';       // lst_f[<section>][c|t|q|<field>]
 
     public static function render(int $sectionId, int $pageId): string
     {
@@ -183,7 +184,7 @@ final class View
         if ($form === 'link') {
             return self::template('link', $vars + ['values' => $old ?? []]);
         }
-        return self::template('form', $vars + [
+        return self::template('form', $vars + self::taxonomyVars($sectionId, $settings) + [
             'mode'     => 'new',
             'token'    => '',
             'item'     => null,
@@ -200,15 +201,34 @@ final class View
      */
     private static function editForm(array $vars, array $settings, array $item, ?array $old, array $auth): string
     {
-        return self::template('form', $vars + $auth + [
+        $sectionId = $vars['section_id'];
+        $tax = Taxonomy::forItems($sectionId, [$item['item_id']])[$item['item_id']];
+        return self::template('form', $vars + $auth + self::taxonomyVars($sectionId, $settings) + [
             'mode'       => 'edit',
             'item'       => $item,
-            'fields'     => Fields::forOwner(Fields::forSection($vars['section_id'])),
-            'values'     => $old ?? ['title' => $item['title'], 'fields' => $item['data']],
+            'fields'     => Fields::forOwner(Fields::forSection($sectionId)),
+            'values'     => $old ?? [
+                'title'      => $item['title'],
+                'fields'     => $item['data'],
+                'categories' => array_column($tax['categories'], 'cat_id'),
+                'tag_ids'    => array_column($tax['tags'], 'tag_id'),
+                'tags'       => implode(', ', array_column($tax['tags'], 'name')),
+            ],
             'captcha'    => '',
             'extendable' => Items::extendable($item, $settings),
             'expired'    => $item['expires_at'] > 0 && $item['expires_at'] <= time(),
         ]);
+    }
+
+    /** What the owner's form offers: visible categories, and the tags as list (fixed) or text (open). */
+    private static function taxonomyVars(int $sectionId, array $settings): array
+    {
+        $mode = $settings['tags_mode'] ?? 'off';
+        return [
+            'categories' => Taxonomy::categories($sectionId, true),
+            'tags_mode'  => $mode,
+            'all_tags'   => $mode === 'fixed' ? Taxonomy::tags($sectionId) : [],
+        ];
     }
 
     private static function publicView(int $sectionId, int $pageId, array $settings, string $baseUrl, bool $frontend, array $flash): string
@@ -218,6 +238,7 @@ final class View
             static fn ($f) => $f['visibility'] === 'public' && FieldTypes::stores($f['type'])
         ));
         $parser = Layouts::parser();
+        $tagsOn = ($settings['tags_mode'] ?? 'off') !== 'off';
 
         $slug = is_string($_GET[self::PARAM_ITEM] ?? null) ? trim($_GET[self::PARAM_ITEM]) : '';
         if ($slug !== '') {
@@ -226,8 +247,9 @@ final class View
                 \I::insertTitle($item['title'] . ' - ' . WEBSITE_TITLE);
                 // the contact form is HTML rendered here; the editable layout only places it
                 $parser->setRawKeys(['CONTACT']);
+                $tax = Taxonomy::forItems($sectionId, [$item['item_id']])[$item['item_id']];
                 return $parser->parse(Layouts::get($settings, 'detail'), [
-                    'ITEM'       => self::itemData($item, $fields, $baseUrl, false),
+                    'ITEM'       => self::itemData($item, $fields, $baseUrl, false, $tax, $tagsOn, $sectionId),
                     'CONTACT'    => self::contactForm($sectionId, $settings, $item, $flash),
                     'LIST_URL'   => $baseUrl,
                     'SECTION_ID' => $sectionId,
@@ -239,26 +261,140 @@ final class View
             }
         }
 
+        $tree = Taxonomy::categories($sectionId, true);
+        $tags = $tagsOn ? Taxonomy::tags($sectionId) : [];
+        $filter = self::filter($sectionId, $fields, $tree, $tags);
+
         $perPage = Settings::perPage($settings);
-        $total = Items::count($sectionId, null, true);
+        $total = Items::count($sectionId, null, true, $filter['items']);
         $pages = max(1, (int) ceil($total / $perPage));
         $page = self::currentPage($sectionId, $pages);
-        $items = Items::list($sectionId, null, true, Settings::orderBy($settings), $perPage, ($page - 1) * $perPage);
+        $items = Items::list($sectionId, null, true, Settings::orderBy($settings), $perPage, ($page - 1) * $perPage, $filter['items']);
+        $taxonomy = Taxonomy::forItems($sectionId, array_column($items, 'item_id'));
 
+        if (Settings::on($settings, 'rss')) {
+            $link = ['rel' => 'alternate', 'type' => 'application/rss+xml', 'title' => WEBSITE_TITLE, 'href' => self::rssUrl($sectionId)];
+            // insertLink() is documented for 1.7 but missing in some builds; insertHtmlCode()
+            // only reaches the body there, insertMeta() takes a whole tag for the head
+            if (method_exists('AssetQueue', 'insertLink')) {
+                \I::insertLink($link);
+            } else {
+                $attributes = '';
+                foreach ($link as $name => $value) {
+                    $attributes .= ' ' . $name . '="' . h($value) . '"';
+                }
+                \I::insertMeta('<link' . $attributes . '>', 'add', 'head_middle');
+            }
+        }
+        // the filter form is HTML rendered here; the editable layout only places it
+        $parser->setRawKeys(['FILTER']);
         return $parser->parse(Layouts::get($settings, 'list'), [
-            'ITEMS'      => array_map(static fn ($i) => self::itemData($i, $fields, $baseUrl, true), $items),
+            'ITEMS'      => array_map(static fn ($i) => self::itemData($i, $fields, $baseUrl, true, $taxonomy[$i['item_id']], $tagsOn, $sectionId), $items),
             'COUNT'      => $total,
             'PAGE'       => $page,
             'PAGES'      => $pages,
-            'PREV_URL'   => $page > 1 ? self::pageUrl($baseUrl, $sectionId, $page - 1) : '',
-            'NEXT_URL'   => $page < $pages ? self::pageUrl($baseUrl, $sectionId, $page + 1) : '',
+            'PREV_URL'   => $page > 1 ? self::pageUrl($baseUrl, $sectionId, $page - 1, $filter['query']) : '',
+            'NEXT_URL'   => $page < $pages ? self::pageUrl($baseUrl, $sectionId, $page + 1, $filter['query']) : '',
             'NOT_FOUND'  => $slug !== '' ? 1 : 0,
+            'FILTER'     => Settings::on($settings, 'filter_form') ? self::filterForm($sectionId, $baseUrl, $fields, $tree, $tags, $filter) : '',
+            'FILTERED'   => $filter['query'] !== [] ? 1 : 0,
+            'CATEGORY'   => $filter['category']['name'] ?? '',
+            'CATEGORY_DESCRIPTION' => $filter['category']['description'] ?? '',
+            'TAG'        => $filter['tag']['name'] ?? '',
+            'RESET_URL'  => $baseUrl,
+            'RSS_URL'    => Settings::on($settings, 'rss') ? self::rssUrl($sectionId) : '',
             'NEW_URL'    => $frontend ? self::formUrl($baseUrl, $sectionId, 'new') : '',
             // with accounts the same link leads to "my entries"
             'LINK_URL'   => $frontend ? self::formUrl($baseUrl, $sectionId, Settings::accountMode($settings) ? 'mine' : 'link') : '',
             'LIST_URL'   => $baseUrl,
             'SECTION_ID' => $sectionId,
         ]);
+    }
+
+    public static function rssUrl(int $sectionId): string
+    {
+        return WB_URL . '/modules/' . Module::DIR . '/rss.php?section_id=' . $sectionId;
+    }
+
+    /**
+     * The list filter from lst_f[<section>][…]: c (category slug), t (tag
+     * slug), q (words), and one key per filterable field. Every value is
+     * checked against what exists, so only known values reach the query.
+     *
+     * @param list<array<string, mixed>> $fields public fields
+     * @param list<array<string, mixed>> $tree visible categories
+     * @param list<array<string, mixed>> $tags
+     * @return array{items: array<string, mixed>, query: array<string, string>, values: array<string, string>, category: ?array, tag: ?array}
+     */
+    private static function filter(int $sectionId, array $fields, array $tree, array $tags): array
+    {
+        $raw = $_GET[self::PARAM_FILTER][$sectionId] ?? [];
+        $raw = is_array($raw) ? array_filter($raw, 'is_string') : [];
+        $result = ['items' => [], 'query' => [], 'values' => [], 'category' => null, 'tag' => null];
+
+        $slug = trim($raw['c'] ?? '');
+        foreach ($slug === '' ? [] : $tree as $cat) {
+            if ($cat['slug'] === $slug) {
+                $result['items']['cats'] = Taxonomy::withDescendants($tree, $cat['cat_id']);
+                $result['category'] = $cat;
+                $result['query']['c'] = $slug;
+                break;
+            }
+        }
+        $slug = trim($raw['t'] ?? '');
+        foreach ($slug === '' ? [] : $tags as $tag) {
+            if ($tag['slug'] === $slug) {
+                $result['items']['tag'] = $tag['tag_id'];
+                $result['tag'] = $tag;
+                $result['query']['t'] = $slug;
+                break;
+            }
+        }
+        foreach ($fields as $field) {
+            $value = trim($raw[$field['name']] ?? '');
+            if ($value === '' || !$field['filterable'] || !in_array($value, array_column($field['options']['choices'] ?? [], 'value'), true)) {
+                continue;
+            }
+            $result['items']['fields'][] = ['name' => $field['name'], 'multi' => $field['type'] === 'checkboxes', 'value' => $value];
+            $result['query'][$field['name']] = $value;
+        }
+        $q = mb_substr(trim(preg_replace('/\s+/u', ' ', $raw['q'] ?? '') ?? ''), 0, 100);
+        if ($q !== '') {
+            $result['items']['q'] = $q;
+            // the words are looked for in the title and in public text fields only
+            $result['items']['q_fields'] = array_column(array_filter(
+                $fields,
+                static fn ($f) => in_array($f['type'], ['text', 'textarea', 'select', 'radio', 'url'], true)
+            ), 'name');
+            $result['query']['q'] = $q;
+        }
+        $result['values'] = $result['query'];
+        return $result;
+    }
+
+    private static function filterForm(int $sectionId, string $baseUrl, array $fields, array $tree, array $tags, array $filter): string
+    {
+        // the page itself may carry a query (?lang=…); the form sends it along
+        $parts = explode('?', $baseUrl, 2);
+        $keep = [];
+        parse_str($parts[1] ?? '', $keep);
+        return self::template('filter', [
+            'section_id' => $sectionId,
+            'action'     => $parts[0],
+            'keep'       => array_filter($keep, 'is_string'),
+            'name'       => self::PARAM_FILTER . '[' . $sectionId . ']',
+            'categories' => $tree,
+            'tags'       => $tags,
+            'fields'     => array_values(array_filter($fields, static fn ($f) => $f['filterable'])),
+            'values'     => $filter['values'],
+            'reset_url'  => $filter['query'] !== [] ? $baseUrl : '',
+        ]);
+    }
+
+    /** The list filtered by one key, for category and tag links. */
+    private static function filterUrl(string $baseUrl, int $sectionId, string $key, string $value): string
+    {
+        return self::withQuery($baseUrl, [self::PARAM_FILTER => [$sectionId => [$key => $value]]]) . '#lst-' . $sectionId;
     }
 
     /** The contact form to the owner, or '' when it is off or the entry has no owner address. */
@@ -283,8 +419,9 @@ final class View
      * name in upper case, and FIELDS for a loop over label and value.
      *
      * @param list<array<string, mixed>> $fields public fields
+     * @param array{categories: list<array>, tags: list<array>}|null $tax from Taxonomy::forItems()
      */
-    public static function itemData(array $item, array $fields, string $baseUrl, bool $listOnly): array
+    public static function itemData(array $item, array $fields, string $baseUrl, bool $listOnly, ?array $tax = null, bool $tagsOn = false, int $sectionId = 0): array
     {
         $data = [
             'ID'        => $item['item_id'],
@@ -313,6 +450,17 @@ final class View
                 ];
             }
         }
+        // categories and tags as links to the filtered list; hidden categories are left out
+        $data['CATEGORIES'] = [];
+        $data['TAGS'] = [];
+        foreach ($tax['categories'] ?? [] as $cat) {
+            if ($cat['visible']) {
+                $data['CATEGORIES'][] = ['NAME' => $cat['name'], 'URL' => self::filterUrl($baseUrl, $sectionId, 'c', $cat['slug'])];
+            }
+        }
+        foreach ($tagsOn ? $tax['tags'] ?? [] : [] as $tag) {
+            $data['TAGS'][] = ['NAME' => $tag['name'], 'URL' => self::filterUrl($baseUrl, $sectionId, 't', $tag['slug'])];
+        }
         return $data;
     }
 
@@ -331,9 +479,11 @@ final class View
         return self::withQuery($baseUrl, [self::PARAM_FORM => $form, self::PARAM_SECTION => $sectionId]) . '#lst-' . $sectionId;
     }
 
-    private static function pageUrl(string $baseUrl, int $sectionId, int $page): string
+    /** @param array<string, string> $filter the active filter, kept while paging */
+    private static function pageUrl(string $baseUrl, int $sectionId, int $page, array $filter = []): string
     {
-        return $page <= 1 ? $baseUrl : self::withQuery($baseUrl, [self::PARAM_PAGE => [$sectionId => $page]]);
+        $query = ($page > 1 ? [self::PARAM_PAGE => [$sectionId => $page]] : []) + ($filter !== [] ? [self::PARAM_FILTER => [$sectionId => $filter]] : []);
+        return $query === [] ? $baseUrl : self::withQuery($baseUrl, $query);
     }
 
     /** @param array<string, mixed> $query */

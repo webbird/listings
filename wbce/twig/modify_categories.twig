@@ -1,0 +1,107 @@
+{#
+    listings/twig/modify_categories.twig – the category tree and the tags of the directory
+#}
+{% extends 'modify.twig' %}
+{% block actions %}
+    <a class="lst-button lst-button--primary" href="{{ url({lst_view: 'category'}) }}">{{ t('NEW_CATEGORY') }}</a>
+{% endblock %}
+{% block content %}
+<h3>{{ t('CATEGORIES') }}</h3>
+{% if categories is empty %}
+    <p class="lst-hint">{{ t('HINT_NO_CATEGORIES') }}</p>
+{% else %}
+<table class="lst-table">
+    <thead>
+        <tr>
+            <th scope="col"><span class="lst-sr">{{ t('ORDER') }}</span></th>
+            <th scope="col">{{ t('CATEGORY_NAME') }}</th>
+            <th scope="col">{{ t('SLUG') }}</th>
+            <th scope="col">{{ t('ENTRIES') }}</th>
+            <th scope="col">{{ t('CATEGORY_VISIBLE') }}</th>
+            <th scope="col"><span class="lst-sr">{{ t('ACTIONS') }}</span></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for c in categories %}
+        {% set key = idkey('category', c.cat_id) %}
+        {% set edit = url({lst_view: 'category', lst_cat: c.cat_id}) %}
+        {# siblings decide what moving means #}
+        {% set siblings = categories|filter(s => s.parent_id == c.parent_id)|map(s => s.cat_id) %}
+        {% set moves = {'-1': ['UP', '▲', siblings|first != c.cat_id], '1': ['DOWN', '▼', siblings|last != c.cat_id]} %}
+        <tr>
+            <td class="lst-move">
+                {% for dir, move in moves %}
+                    {% if move[2] %}
+                    <form method="post" action="{{ action }}">
+                        {% include '_hidden.twig' %}
+                        <input type="hidden" name="lst_action" value="category_move">
+                        <input type="hidden" name="lst_dir" value="{{ dir }}">
+                        <input type="hidden" name="lst_cat" value="{{ key }}">
+                        <button type="submit" class="lst-link-button" title="{{ t('MOVE_' ~ move[0]) }}" aria-label="{{ t('MOVE_' ~ move[0]) }}: {{ c.name }}"><span aria-hidden="true">{{ move[1] }}</span></button>
+                    </form>
+                    {% endif %}
+                {% endfor %}
+            </td>
+            <th scope="row" class="lst-level-{{ min(c.level, 4) }}"><a href="{{ edit }}">{{ c.name }}</a></th>
+            <td><code>{{ c.slug }}</code></td>
+            <td>{{ c.count }}</td>
+            <td>{{ c.visible ? t('YES') : t('NO') }}</td>
+            <td class="lst-actions">
+                <a href="{{ url({lst_view: 'category', lst_parent: c.cat_id}) }}">{{ t('NEW_SUBCATEGORY') }}</a>
+                <a href="{{ edit }}">{{ L_('TEXT:MODIFY') }}</a>
+                <form method="post" action="{{ action }}" data-lst-confirm="{{ t('CONFIRM_DELETE_CATEGORY', c.name) }}">
+                    {% include '_hidden.twig' %}
+                    <input type="hidden" name="lst_action" value="category_delete">
+                    <input type="hidden" name="lst_cat" value="{{ key }}">
+                    <button type="submit" class="lst-link-button">{{ L_('TEXT:DELETE') }}</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<h3>{{ t('TAGS') }}</h3>
+{% if tags_mode == 'off' %}<p class="lst-hint">{{ t('HINT_TAGS_OFF') }}</p>{% endif %}
+{% if tags is empty %}
+    <p>{{ t('NO_TAGS') }}</p>
+{% else %}
+<table class="lst-table">
+    <thead>
+        <tr>
+            <th scope="col">{{ t('TAG') }}</th>
+            <th scope="col">{{ t('ENTRIES') }}</th>
+            <th scope="col"><span class="lst-sr">{{ t('ACTIONS') }}</span></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for tag in tags %}
+        {% set key = idkey('tag', tag.tag_id) %}
+        <tr>
+            <th scope="row">
+                <form method="post" action="{{ action }}" class="lst-inline-form">
+                    {% include '_hidden.twig' %}
+                    <input type="hidden" name="lst_action" value="tag_rename">
+                    <input type="hidden" name="lst_tag" value="{{ key }}">
+                    <label class="lst-sr" for="lst_tag_{{ tag.tag_id }}">{{ t('TAG') }}</label>
+                    <input type="text" id="lst_tag_{{ tag.tag_id }}" name="name" maxlength="100" required value="{{ tag.name }}">
+                    <button type="submit" class="lst-button">{{ t('RENAME') }}</button>
+                </form>
+            </th>
+            <td>{{ tag.count }}</td>
+            <td class="lst-actions">
+                <form method="post" action="{{ action }}" data-lst-confirm="{{ t('CONFIRM_DELETE_TAG', tag.name) }}">
+                    {% include '_hidden.twig' %}
+                    <input type="hidden" name="lst_action" value="tag_delete">
+                    <input type="hidden" name="lst_tag" value="{{ key }}">
+                    <button type="submit" class="lst-link-button">{{ L_('TEXT:DELETE') }}</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+<p class="lst-help">{{ t('HINT_TAGS') }}</p>
+{% endblock %}

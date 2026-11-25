@@ -31,6 +31,10 @@ final class Settings
         'runtime_days'  => '0',      // entries of owners expire after this; 0 = never
         'remind_days'   => '7',      // the owner is reminded this many days before
         'reminder_run'  => '0',      // last run of the reminders (no cron in WBCE)
+        // 0.4
+        'tags_mode'     => 'off',    // off | fixed (the admin's list) | open (owners add tags)
+        'filter_form'   => '1',      // search and filter above the list
+        'rss'           => '0',      // feed of the latest entries
     ];
 
     public const OWNER_MODES = ['email', 'account'];

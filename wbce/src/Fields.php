@@ -19,7 +19,9 @@ final class Fields
     /** Keys the layouts already use for every entry. */
     private const RESERVED = [
         'id', 'title', 'slug', 'url', 'status', 'created', 'updated', 'published',
-        'expires', 'fields', 'raw', 'page', 'item', 'section',
+        'expires', 'fields', 'raw', 'page', 'item', 'section', 'categories', 'tags',
+        // keys of the list filter (lst_f[…][c|t|q])
+        'c', 't', 'q',
     ];
 
     /**
@@ -129,6 +131,7 @@ final class Fields
             'visibility' => $visibility,
             'in_list'    => $stores && $str('in_list') === '1' ? 1 : 0,
             'editable'   => $stores && $visibility !== 'admin' && $str('editable') === '1' ? 1 : 0,
+            'filterable' => self::canFilter($type, $visibility) && $str('filterable') === '1' ? 1 : 0,
             'options'    => $options,
         ];
         return [$data, $errors];
@@ -158,11 +161,11 @@ final class Fields
 
         $database->query(
             'UPDATE `' . self::TABLE . '` SET `name` = ?, `type` = ?, `label` = ?, `help` = ?, `required` = ?,
-                    `visibility` = ?, `in_list` = ?, `editable` = ?, `options` = ?
+                    `visibility` = ?, `in_list` = ?, `editable` = ?, `filterable` = ?, `options` = ?
               WHERE `field_id` = ? AND `section_id` = ?',
             [
                 $row['name'], $row['type'], $row['label'], $row['help'], $row['required'],
-                $row['visibility'], $row['in_list'], $row['editable'], $row['options'], $fieldId, $sectionId,
+                $row['visibility'], $row['in_list'], $row['editable'], $row['filterable'], $row['options'], $fieldId, $sectionId,
             ]
         );
         return $database->hasError() ? null : $fieldId;
@@ -272,7 +275,17 @@ final class Fields
         $row['in_list'] = (int) $row['in_list'];
         // admin fields are never the owner's, whatever the column says (it defaults to 1 for older fields)
         $row['editable'] = $row['visibility'] === 'admin' ? 0 : (int) ($row['editable'] ?? 1);
+        $row['filterable'] = self::canFilter($row['type'], $row['visibility']) ? (int) ($row['filterable'] ?? 0) : 0;
         return $row;
+    }
+
+    /**
+     * Visitors filter by public choice fields only: a filter on a hidden
+     * field would tell them its value.
+     */
+    public static function canFilter(string $type, string $visibility): bool
+    {
+        return FieldTypes::isChoice($type) && $visibility === 'public';
     }
 
     /**

@@ -21,6 +21,28 @@
                 </select>
             </div>
         </div>
+        <div class="lst-row">
+            <span class="lst-label">{{ t('FILTER') }}</span>
+            <div>
+                <label><input type="checkbox" name="filter_form" value="1"{% if form.filter_form|default('0') == '1' %} checked{% endif %}> {{ t('FILTER_FORM_ON') }}</label>
+                <p class="lst-help">{{ t('HELP_FILTER_FORM') }}</p>
+            </div>
+        </div>
+        <div class="lst-row">
+            <label for="lst_tags_mode">{{ t('TAGS') }}</label>
+            <div>
+                <select id="lst_tags_mode" name="tags_mode">
+                    {% for mode in tag_modes %}<option value="{{ mode }}"{% if form.tags_mode|default('off') == mode %} selected{% endif %}>{{ t('TAGS_MODE_' ~ mode|upper) }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="lst-row">
+            <span class="lst-label">RSS</span>
+            <div>
+                <label><input type="checkbox" name="rss" value="1"{% if form.rss|default('0') == '1' %} checked{% endif %}> {{ t('RSS_ON') }}</label>
+                <p class="lst-help">{{ t('HELP_RSS') }} <code>{{ rss_url }}</code></p>
+            </div>
+        </div>
     </fieldset>
 
     <fieldset>

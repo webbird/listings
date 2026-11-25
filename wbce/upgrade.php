@@ -26,3 +26,8 @@ if (!$database->addField('{TP}mod_listings_items', 'reminded_at', 'INT NOT NULL 
 if (!$database->addIndex('{TP}mod_listings_items', 'owner_user', 'section_id, owner_user_id')) {
     log_err('Listings: ' . $database->getError());
 }
+
+// 0.4: fields offered as filter in the list (the new tables come from install_struct.sql)
+if (!$database->addField('{TP}mod_listings_fields', 'filterable', 'TINYINT NOT NULL DEFAULT 0')) {
+    log_err('Listings: ' . $database->getError());
+}

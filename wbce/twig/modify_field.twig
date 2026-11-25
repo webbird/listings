@@ -66,6 +66,10 @@
             <label><input type="checkbox" name="in_list" value="1"{% if form.in_list == '1' %} checked{% endif %}> {{ t('FIELD_IN_LIST') }}</label><br>
             <label><input type="checkbox" name="editable" value="1"{% if form.editable == '1' %} checked{% endif %}> {{ t('FIELD_EDITABLE') }}</label>
             <p class="lst-help">{{ t('HELP_EDITABLE') }}</p>
+            <span data-lst-for="select radio checkboxes">
+                <label><input type="checkbox" name="filterable" value="1"{% if form.filterable|default('0') == '1' %} checked{% endif %}> {{ t('FIELD_FILTERABLE') }}</label>
+                <p class="lst-help">{{ t('HELP_FILTERABLE') }}</p>
+            </span>
         </div>
     </div>
     <div class="lst-row" data-lst-for="{{ storing }}">

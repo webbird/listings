@@ -4,6 +4,9 @@
    LIST_URL, CONTACT (the contact form to the owner, empty when switched off) #}
 <article class="mod_listings lst-detail">
     <h2 class="lst-item-title">[ITEM.TITLE]</h2>
+    {if ITEM.CATEGORIES}
+    <p class="lst-item-categories">{foreach ITEM.CATEGORIES as C}<a href="[C.URL]">[C.NAME]</a>{if not C._LAST}, {/if}{/foreach}</p>
+    {/if}
     {if ITEM.FIELDS}
     <dl class="lst-fields">
         {foreach ITEM.FIELDS as F}
@@ -11,6 +14,9 @@
         <dd>{if F.TYPE == "email"}<a href="mailto:[F.VALUE]">[F.VALUE]</a>{elseif F.TYPE == "url"}<a href="[F.VALUE]" rel="nofollow noopener">[F.VALUE]</a>{elseif F.TYPE == "date"}[F.VALUE|datetime]{elseif F.TYPE == "datetime"}[F.VALUE|datetime:"d.m.Y H:i"]{elseif F.TYPE == "textarea"}[F.VALUE|nl2br]{else}[F.VALUE]{/if}</dd>
         {/foreach}
     </dl>
+    {/if}
+    {if ITEM.TAGS}
+    <p class="lst-item-tags">{foreach ITEM.TAGS as T}<a class="lst-tag" href="[T.URL]">[T.NAME]</a> {/foreach}</p>
     {/if}
     <p class="lst-meta">[MOD_LISTINGS.UPDATED]: [ITEM.UPDATED|datetime]</p>
     {if CONTACT}
