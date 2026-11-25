@@ -1,0 +1,20 @@
+<?php
+/**
+ * Listings – upgrade.php
+ * The CREATE TABLE statements use IF NOT EXISTS, so running them again is
+ * safe and adds new tables; new columns of existing tables follow below.
+ * @module listings  @author Bianka Martinovic
+ * @license GNU General Public License   @platform WBCE 1.7.0+
+ */
+
+defined('WB_PATH') or die('This file cannot be accessed directly!');
+
+$database->importSql(__DIR__ . '/install_struct.sql');
+if ($database->hasError()) {
+    log_err('Listings: ' . $database->getError());
+}
+
+// 0.2: owners may edit a field (or only the admin)
+if (!$database->addField('{TP}mod_listings_fields', 'editable', 'TINYINT NOT NULL DEFAULT 1')) {
+    log_err('Listings: ' . $database->getError());
+}

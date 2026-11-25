@@ -1,0 +1,25 @@
+.mod_listings .lst-item { margin: 0 0 1.5em; padding: 0 0 1em; border-bottom: 1px solid rgba(0, 0, 0, .1); }
+.mod_listings .lst-item-title { margin: 0 0 .4em; }
+.mod_listings .lst-fields { display: grid; grid-template-columns: max-content 1fr; gap: .25em 1em; margin: 0 0 .6em; }
+.mod_listings .lst-fields dt { font-weight: 600; }
+.mod_listings .lst-fields dd { margin: 0; }
+.mod_listings .lst-pager { display: flex; gap: 1em; align-items: center; }
+.mod_listings .lst-meta { font-size: .875em; opacity: .75; }
+.mod_listings .lst-notice { padding: .5em .75em; border-left: 3px solid #c80; background: rgba(200, 136, 0, .08); }
+.mod_listings .lst-owner-links { margin: 0 0 1.5em; }
+.mod_listings .lst-message { margin: 0 0 1.5em; padding: .6em .9em; border-left: 3px solid #3a8a4a; background: rgba(58, 138, 74, .08); }
+.mod_listings .lst-message.lst-error { border-left-color: #b33; background: rgba(187, 51, 51, .08); }
+.mod_listings .lst-message ul, .mod_listings .lst-message p { margin: 0; }
+.mod_listings .lst-owner-form .lst-row { margin: 0 0 1em; }
+.mod_listings .lst-owner-form .lst-row > label { display: block; font-weight: 600; margin-bottom: .2em; }
+.mod_listings .lst-owner-form input[type=text], .mod_listings .lst-owner-form input[type=email], .mod_listings .lst-owner-form input[type=url],
+.mod_listings .lst-owner-form input[type=tel], .mod_listings .lst-owner-form input[type=number], .mod_listings .lst-owner-form textarea,
+.mod_listings .lst-owner-form select { width: 100%; max-width: 36em; box-sizing: border-box; }
+.mod_listings .lst-owner-form .lst-privacy label { font-weight: 400; }
+.mod_listings .lst-help { margin: .2em 0 0; font-size: .875em; opacity: .75; }
+.mod_listings .lst-badge { margin-left: .4em; padding: 0 .4em; border-radius: 3px; background: rgba(0, 0, 0, .07); font-size: .8em; font-weight: 400; }
+.mod_listings .lst-choices label { margin-right: 1em; white-space: nowrap; font-weight: 400; }
+.mod_listings .lst-buttons { display: flex; gap: 1em; align-items: center; margin-top: 1.25em; }
+.mod_listings .lst-delete { margin-top: 2em; }
+/* the honeypot: out of sight for people, still filled in by bots */
+.mod_listings .lst-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

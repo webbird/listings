@@ -1,0 +1,17 @@
+{# Listings – detail layout
+   ITEM: ID, TITLE, URL, CREATED, UPDATED, PUBLISHED, EXPIRES, every public field by name (e.g. ITEM.PHONE),
+         FIELDS (loop of all public fields with a value: NAME, LABEL, TYPE, VALUE), RAW (stored values by name)
+   LIST_URL #}
+<article class="mod_listings lst-detail">
+    <h2 class="lst-item-title">[ITEM.TITLE]</h2>
+    {if ITEM.FIELDS}
+    <dl class="lst-fields">
+        {foreach ITEM.FIELDS as F}
+        <dt>[F.LABEL]</dt>
+        <dd>{if F.TYPE == "email"}<a href="mailto:[F.VALUE]">[F.VALUE]</a>{elseif F.TYPE == "url"}<a href="[F.VALUE]" rel="nofollow noopener">[F.VALUE]</a>{elseif F.TYPE == "date"}[F.VALUE|datetime]{elseif F.TYPE == "datetime"}[F.VALUE|datetime:"d.m.Y H:i"]{elseif F.TYPE == "textarea"}[F.VALUE|nl2br]{else}[F.VALUE]{/if}</dd>
+        {/foreach}
+    </dl>
+    {/if}
+    <p class="lst-meta">[MOD_LISTINGS.UPDATED]: [ITEM.UPDATED|datetime]</p>
+    <p class="lst-back"><a href="[LIST_URL]">[MOD_LISTINGS.BACK_TO_LIST]</a></p>
+</article>

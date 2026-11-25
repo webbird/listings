@@ -1,0 +1,41 @@
+.lst-backend .lst-tabs { display: flex; gap: .25em; margin: 0 0 1em; border-bottom: 1px solid #ccc; }
+.lst-backend .lst-tabs a { padding: .45em .9em; border: 1px solid transparent; border-bottom: 0; text-decoration: none; }
+.lst-backend .lst-tabs a.active { border-color: #ccc; background: #fff; margin-bottom: -1px; font-weight: 600; }
+.lst-backend .lst-toolbar { display: flex; flex-wrap: wrap; gap: 1em; align-items: center; margin: 0 0 1em; }
+.lst-backend .lst-filter a { margin-right: .75em; }
+.lst-backend .lst-filter a.active { font-weight: 600; }
+.lst-backend .lst-button { display: inline-block; padding: .4em .9em; border: 1px solid #888; border-radius: 3px; text-decoration: none; }
+.lst-backend .lst-table { width: 100%; border-collapse: collapse; }
+.lst-backend .lst-table th, .lst-backend .lst-table td { padding: .4em .5em; border-bottom: 1px solid #e3e3e3; text-align: left; vertical-align: middle; }
+.lst-backend .lst-heading-row td { background: #f6f6f6; font-weight: 600; }
+.lst-backend .lst-actions { white-space: nowrap; text-align: right; }
+.lst-backend .lst-actions form, .lst-backend .lst-move form { display: inline; margin: 0; }
+.lst-backend .lst-move { width: 3em; white-space: nowrap; }
+.lst-backend .lst-link-button { background: none; border: 0; padding: 0 .25em; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+.lst-backend .lst-status { padding: .1em .5em; border-radius: 3px; font-size: .875em; }
+.lst-backend .lst-status-published { background: #e3f4e4; }
+.lst-backend .lst-status-draft { background: #eee; }
+.lst-backend .lst-expired { color: #b00; }
+.lst-backend .lst-pager { margin: 1em 0; display: flex; gap: .6em; }
+.lst-backend .lst-form { max-width: 960px; }
+.lst-backend .lst-row { display: grid; grid-template-columns: 14em 1fr; gap: .5em 1em; margin: 0 0 .8em; align-items: start; }
+.lst-backend .lst-row > label, .lst-backend .lst-row > .lst-label { padding-top: .35em; font-weight: 600; }
+.lst-backend .lst-row input[type=text], .lst-backend .lst-row input[type=email], .lst-backend .lst-row input[type=url],
+.lst-backend .lst-row input[type=tel], .lst-backend .lst-row textarea, .lst-backend .lst-row select { width: 100%; max-width: 40em; box-sizing: border-box; }
+.lst-backend .lst-choices label { margin-right: 1em; white-space: nowrap; }
+.lst-backend .lst-help { margin: .25em 0 0; font-size: .875em; color: #666; }
+.lst-backend .lst-hint { padding: .5em .75em; background: #f4f7fb; border-left: 3px solid #7a9cc6; }
+.lst-backend .lst-badge { margin-left: .5em; padding: 0 .4em; border-radius: 3px; background: #eee; font-size: .8em; font-weight: 400; }
+.lst-backend .lst-form-heading { margin: 1.5em 0 .6em; padding-bottom: .2em; border-bottom: 1px solid #ddd; }
+.lst-backend fieldset { margin: 1.5em 0; padding: .5em 1em 1em; border: 1px solid #ddd; }
+.lst-backend .lst-code { width: 100%; font-family: Consolas, Menlo, monospace; font-size: 13px; line-height: 1.45; tab-size: 4; }
+.lst-backend .lst-buttons { display: flex; gap: 1em; align-items: center; margin: 1.5em 0 0; }
+.lst-backend [hidden] { display: none !important; }
+@media (max-width: 700px) { .lst-backend .lst-row { grid-template-columns: 1fr; } }
+.lst-backend .lst-status-pending { background: #fff1cc; }
+.lst-backend .lst-status-rejected { background: #f8dede; }
+.lst-backend .lst-row-waiting td { background: #fffaf0; }
+.lst-backend .lst-filter a.lst-waiting { font-weight: 600; }
+.lst-backend .lst-actions .lst-button { padding: .15em .6em; margin-right: .25em; cursor: pointer; background: #fff; font: inherit; }
+.lst-backend .lst-actions .lst-approve { border-color: #3a8a4a; color: #2c6b38; }
+.lst-backend .lst-actions .lst-reject { border-color: #b33; color: #a22; }

@@ -1,0 +1,41 @@
+{# Listings – list layout
+   ITEMS (loop): ID, TITLE, URL, CREATED, UPDATED, PUBLISHED, EXPIRES, every public field by name (e.g. ITEM.PHONE),
+                 FIELDS (loop of the fields marked "show in list": NAME, LABEL, TYPE, VALUE)
+   COUNT, PAGE, PAGES, PREV_URL, NEXT_URL, NOT_FOUND, LIST_URL,
+   NEW_URL, LINK_URL (empty unless visitors may add entries) #}
+<div class="mod_listings lst-list" id="lst-[SECTION_ID]">
+    {if NOT_FOUND}
+    <p class="lst-notice">[MOD_LISTINGS.NOT_FOUND]</p>
+    {/if}
+    {if NEW_URL}
+    <p class="lst-owner-links">
+        <a class="lst-add" href="[NEW_URL]">[MOD_LISTINGS.ADD_ENTRY]</a>
+        · <a href="[LINK_URL]">[MOD_LISTINGS.REQUEST_LINK]</a>
+    </p>
+    {/if}
+
+    {foreach ITEMS as ITEM}
+    <article class="lst-item">
+        <h3 class="lst-item-title"><a href="[ITEM.URL]">[ITEM.TITLE]</a></h3>
+        {if ITEM.FIELDS}
+        <dl class="lst-fields">
+            {foreach ITEM.FIELDS as F}
+            <dt>[F.LABEL]</dt>
+            <dd>{if F.TYPE == "email"}<a href="mailto:[F.VALUE]">[F.VALUE]</a>{elseif F.TYPE == "url"}<a href="[F.VALUE]" rel="nofollow noopener">[F.VALUE]</a>{elseif F.TYPE == "date"}[F.VALUE|datetime]{elseif F.TYPE == "datetime"}[F.VALUE|datetime:"d.m.Y H:i"]{elseif F.TYPE == "textarea"}[F.VALUE|excerpt:200]{else}[F.VALUE]{/if}</dd>
+            {/foreach}
+        </dl>
+        {/if}
+        <p class="lst-more"><a href="[ITEM.URL]">[MOD_LISTINGS.MORE]</a></p>
+    </article>
+    {else}
+    <p class="lst-empty">[MOD_LISTINGS.NO_ENTRIES]</p>
+    {/foreach}
+
+    {if PAGES > 1}
+    <nav class="lst-pager">
+        {if PREV_URL}<a class="lst-prev" href="[PREV_URL]">[MOD_LISTINGS.PREVIOUS]</a>{/if}
+        <span class="lst-pages">[PAGE] / [PAGES]</span>
+        {if NEXT_URL}<a class="lst-next" href="[NEXT_URL]">[MOD_LISTINGS.NEXT]</a>{/if}
+    </nav>
+    {/if}
+</div>
