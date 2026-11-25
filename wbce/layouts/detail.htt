@@ -1,7 +1,7 @@
 {# Listings – detail layout
    ITEM: ID, TITLE, URL, CREATED, UPDATED, PUBLISHED, EXPIRES, every public field by name (e.g. ITEM.PHONE),
          FIELDS (loop of all public fields with a value: NAME, LABEL, TYPE, VALUE), RAW (stored values by name)
-   LIST_URL #}
+   LIST_URL, CONTACT (the contact form to the owner, empty when switched off) #}
 <article class="mod_listings lst-detail">
     <h2 class="lst-item-title">[ITEM.TITLE]</h2>
     {if ITEM.FIELDS}
@@ -13,5 +13,8 @@
     </dl>
     {/if}
     <p class="lst-meta">[MOD_LISTINGS.UPDATED]: [ITEM.UPDATED|datetime]</p>
+    {if CONTACT}
+    <section class="lst-contact" id="lst-contact">[CONTACT]</section>
+    {/if}
     <p class="lst-back"><a href="[LIST_URL]">[MOD_LISTINGS.BACK_TO_LIST]</a></p>
 </article>

@@ -180,6 +180,60 @@ $MOD_LISTINGS['MAIL_ADMIN_WAITING_TEXT']    = 'Ein Eintrag in „%s“ wurde bes
 $MOD_LISTINGS['MAIL_ADMIN_NEW_SUBJECT']     = 'Neuer Eintrag: %s';
 $MOD_LISTINGS['MAIL_ADMIN_NEW_TEXT']        = 'Ein Eintrag in „%s“ wurde bestätigt und ist online:';
 
+// 0.3: Konten, Laufzeit, Kontakt
+$MOD_LISTINGS['OWNER_MODE']         = 'Inhaber';
+$MOD_LISTINGS['OWNER_MODE_EMAIL']   = 'Ohne Konto: Links per E-Mail';
+$MOD_LISTINGS['OWNER_MODE_ACCOUNT'] = 'Mit Frontend-Konto der Website';
+$MOD_LISTINGS['HELP_OWNER_MODE']    = 'Mit Konto melden sich Inhaber an, finden ihre Einträge unter „Meine Einträge“ und brauchen keinen Bestätigungslink.';
+$MOD_LISTINGS['WARN_NO_LOGIN']      = 'Die Frontend-Anmeldung der Website ist ausgeschaltet (Grundeinstellungen). Inhaber mit Konto können sich nicht anmelden.';
+$MOD_LISTINGS['SETTINGS_RUNTIME']   = 'Laufzeit';
+$MOD_LISTINGS['RUNTIME_DAYS']       = 'Laufzeit in Tagen';
+$MOD_LISTINGS['HELP_RUNTIME']       = 'Einträge von Inhabern laufen so viele Tage nach ihrer ersten Veröffentlichung ab. 0: nie. Eigene Einträge behalten das im Eintrag gesetzte Datum.';
+$MOD_LISTINGS['REMIND_DAYS']        = 'Erinnerung (Tage vorher)';
+$MOD_LISTINGS['HELP_REMIND']        = 'Der Inhaber bekommt eine Mail mit einem Link zum Verlängern. Ab dann und nach dem Ablauf lässt sich der Eintrag um eine Laufzeit verlängern. 0: keine Erinnerung, verlängern erst nach dem Ablauf.';
+$MOD_LISTINGS['SETTINGS_CONTACT']   = 'Kontakt';
+$MOD_LISTINGS['CONTACT']            = 'Kontaktformular';
+$MOD_LISTINGS['CONTACT_ON']         = 'Besucher können dem Inhaber von der Detailseite aus schreiben';
+$MOD_LISTINGS['HELP_CONTACT']       = 'Die Adresse des Inhabers bleibt verborgen; die Antwort geht direkt an den Absender. Nur für Einträge mit Inhaber-Adresse.';
+$MOD_LISTINGS['ERR_RUNTIME']        = 'Die Laufzeit muss eine Zahl von 0 bis %d sein.';
+$MOD_LISTINGS['ERR_REMIND']         = 'Die Erinnerung muss eine Zahl von 0 bis 365 sein.';
+
+$MOD_LISTINGS['INTRO_NEW_ACCOUNT']          = 'Der Eintrag ist nach dem Absenden sofort veröffentlicht. Du findest ihn unter „Meine Einträge“.';
+$MOD_LISTINGS['INTRO_NEW_ACCOUNT_APPROVAL'] = 'Nach dem Absenden wird der Eintrag geprüft und dann veröffentlicht. Du findest ihn unter „Meine Einträge“.';
+$MOD_LISTINGS['MY_ENTRIES']        = 'Meine Einträge';
+$MOD_LISTINGS['NO_OWN_ENTRIES']    = 'Du hast hier noch keine Einträge.';
+$MOD_LISTINGS['ACTIONS']           = 'Aktionen';
+$MOD_LISTINGS['LOGIN_REQUIRED']    = 'Bitte anmelden';
+$MOD_LISTINGS['INTRO_LOGIN']       = 'Einträge gehören hier zu einem Konto dieser Website. Melde dich an, um Einträge anzulegen oder zu ändern.';
+$MOD_LISTINGS['LOGIN']             = 'Anmelden';
+$MOD_LISTINGS['SIGNUP']            = 'Konto anlegen';
+$MOD_LISTINGS['ERR_NO_LOGIN']      = 'Die Anmeldung ist auf dieser Website ausgeschaltet, deshalb lassen sich hier keine Einträge anlegen.';
+$MOD_LISTINGS['EXPIRES_ON']        = 'Er läuft bis %s.';
+$MOD_LISTINGS['EXPIRED_ON']        = 'Er ist am %s abgelaufen und wird nicht mehr angezeigt.';
+$MOD_LISTINGS['EXPIRED']           = 'abgelaufen';
+$MOD_LISTINGS['EXTEND']            = 'Verlängern';
+$MOD_LISTINGS['EXTEND_ENTRY']      = '„%s“ verlängern';
+$MOD_LISTINGS['MSG_EXTENDED']      = 'Der Eintrag ist bis %s verlängert.';
+$MOD_LISTINGS['MSG_ACCOUNT_WAITING']   = 'Danke! Dein Eintrag wird veröffentlicht, sobald er geprüft ist.';
+$MOD_LISTINGS['MSG_ACCOUNT_PUBLISHED'] = 'Danke! Dein Eintrag ist veröffentlicht.';
+$MOD_LISTINGS['ERR_NOT_YOURS']         = 'Diesen Eintrag gibt es nicht, oder er gehört nicht zu deinem Konto.';
+$MOD_LISTINGS['ERR_TOO_MANY_CONTACT']  = 'Du hast in kurzer Zeit mehrere Nachrichten geschickt. Bitte in einer Stunde noch einmal versuchen.';
+$MOD_LISTINGS['ERR_NOT_EXTENDABLE'] = 'Dieser Eintrag lässt sich (noch) nicht verlängern.';
+
+$MOD_LISTINGS['CONTACT_TITLE']     = 'Kontakt';
+$MOD_LISTINGS['CONTACT_NAME']      = 'Dein Name';
+$MOD_LISTINGS['CONTACT_EMAIL']     = 'Deine E-Mail-Adresse';
+$MOD_LISTINGS['CONTACT_MESSAGE']   = 'Nachricht';
+$MOD_LISTINGS['CONTACT_CONSENT']   = 'Ich bin einverstanden, dass mein Name, meine Adresse und meine Nachricht an den Inhaber dieses Eintrags weitergegeben werden.';
+$MOD_LISTINGS['CONTACT_SEND']      = 'Nachricht senden';
+$MOD_LISTINGS['ERR_CONTACT_SHORT'] = 'Bitte schreib ein paar Worte mehr (mindestens 10 Zeichen).';
+$MOD_LISTINGS['MSG_CONTACT_SENT']  = 'Danke, deine Nachricht ist unterwegs.';
+
+$MOD_LISTINGS['MAIL_REMINDER_SUBJECT'] = 'Dein Eintrag „%1$s“ läuft am %2$s ab';
+$MOD_LISTINGS['MAIL_REMINDER_TEXT']    = 'Dein Eintrag „%1$s“ in „%2$s“ läuft am %3$s ab und wird dann nicht mehr angezeigt. Damit er online bleibt, verlängere ihn hier:';
+$MOD_LISTINGS['MAIL_CONTACT_SUBJECT']  = 'Nachricht zu deinem Eintrag „%s“';
+$MOD_LISTINGS['MAIL_CONTACT_TEXT']     = 'Jemand hat dir zu deinem Eintrag „%1$s“ in „%2$s“ auf %3$s geschrieben. Deine Adresse wurde nicht angezeigt; zum Antworten einfach auf diese Mail antworten.';
+
 // Meldungen
 $MOD_LISTINGS['SAVED_ITEM']     = 'Eintrag „%s“ gespeichert.';
 $MOD_LISTINGS['DELETED_ITEM']   = 'Eintrag „%s“ gelöscht.';

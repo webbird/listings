@@ -179,14 +179,31 @@ switch ($post('lst_action')) {
         if ($notify !== '' && filter_var($notify, FILTER_VALIDATE_EMAIL) === false) {
             $errors[] = L_('MOD_LISTINGS:ERR_EMAIL', L_('MOD_LISTINGS:NOTIFY_EMAIL'));
         }
-        $values = ['per_page' => $perPage, 'sort' => $sort, 'notify_email' => $notify];
-        foreach (['frontend', 'approval', 'recheck', 'captcha'] as $flag) {
+        $runtime = trim($post('runtime_days'));
+        $remind = trim($post('remind_days'));
+        if (!ctype_digit($runtime) || (int) $runtime > Settings::RUNTIME_MAX) {
+            $errors[] = L_('MOD_LISTINGS:ERR_RUNTIME', Settings::RUNTIME_MAX);
+        }
+        if (!ctype_digit($remind) || (int) $remind > 365) {
+            $errors[] = L_('MOD_LISTINGS:ERR_REMIND');
+        }
+        $values = [
+            'per_page'     => $perPage,
+            'sort'         => $sort,
+            'notify_email' => $notify,
+            'owner_mode'   => in_array($post('owner_mode'), Settings::OWNER_MODES, true) ? $post('owner_mode') : 'email',
+            'runtime_days' => $runtime,
+            'remind_days'  => $remind,
+        ];
+        foreach (['frontend', 'approval', 'recheck', 'captcha', 'contact'] as $flag) {
             $values[$flag] = $post($flag) === '1' ? '1' : '0';
         }
         if ($errors !== []) {
             $fail($errors, ['lst_view' => 'settings'], $values);
         }
         $values['per_page'] = (string) (int) $perPage;
+        $values['runtime_days'] = (string) (int) $runtime;
+        $values['remind_days'] = (string) (int) $remind;
         if (Settings::save($sectionId, $values) !== null) {
             $fail([$dbError], ['lst_view' => 'settings']);
         }

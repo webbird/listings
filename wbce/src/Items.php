@@ -145,10 +145,14 @@ final class Items
         $now = time();
         $json = json_encode($values['data'], JSON_UNESCAPED_UNICODE);
         $publishedAt = (int) ($existing['published_at'] ?? 0);
+        $ownerEmail = array_key_exists('owner_email', $values) ? (string) $values['owner_email'] : (string) ($existing['owner_email'] ?? '');
+        $ownerUserId = (int) ($values['owner_user_id'] ?? $existing['owner_user_id'] ?? 0);
         if ($values['status'] === 'published' && $publishedAt === 0) {
             $publishedAt = $now;
+            if ((int) $values['expires_at'] === 0) {
+                $values['expires_at'] = self::firstExpiry($sectionId, $ownerEmail, $ownerUserId, $now);
+            }
         }
-        $ownerEmail = array_key_exists('owner_email', $values) ? (string) $values['owner_email'] : (string) ($existing['owner_email'] ?? '');
 
         if ($existing === null) {
             $database->insertRow(self::TABLE, [
@@ -158,6 +162,7 @@ final class Items
                 'slug'         => $values['slug'],
                 'status'       => $values['status'],
                 'owner_email'  => $ownerEmail,
+                'owner_user_id' => $ownerUserId,
                 'data'         => $json,
                 'created_at'   => $now,
                 'updated_at'   => $now,
@@ -180,22 +185,112 @@ final class Items
         return $database->hasError() ? null : (int) $existing['item_id'];
     }
 
-    /** Changes only the status; the first publication sets published_at. */
+    /** Changes only the status; the first publication sets published_at and starts the runtime. */
     public static function setStatus(int $sectionId, int $itemId, string $status): bool
     {
         global $database;
-        if (!in_array($status, self::STATUSES, true)) {
+        $item = self::find($sectionId, $itemId);
+        if ($item === null || !in_array($status, self::STATUSES, true)) {
             return false;
         }
         $now = time();
+        $publishedAt = $item['published_at'];
+        $expiresAt = $item['expires_at'];
+        if ($status === 'published' && $publishedAt === 0) {
+            $publishedAt = $now;
+            if ($expiresAt === 0) {
+                $expiresAt = self::firstExpiry($sectionId, $item['owner_email'], $item['owner_user_id'], $now);
+            }
+        }
         $database->query(
-            'UPDATE `' . self::TABLE . '`
-                SET `status` = ?, `updated_at` = ?,
-                    `published_at` = CASE WHEN ? = 1 AND `published_at` = 0 THEN ? ELSE `published_at` END
+            'UPDATE `' . self::TABLE . '` SET `status` = ?, `updated_at` = ?, `published_at` = ?, `expires_at` = ?
               WHERE `item_id` = ? AND `section_id` = ?',
-            [$status, $now, $status === 'published' ? 1 : 0, $now, $itemId, $sectionId]
+            [$status, $now, $publishedAt, $expiresAt, $itemId, $sectionId]
         );
         return !$database->hasError();
+    }
+
+    /**
+     * Entries of owners run for the configured days from their first
+     * publication; the admin's own entries and a runtime of 0 never expire.
+     */
+    private static function firstExpiry(int $sectionId, string $ownerEmail, int $ownerUserId, int $now): int
+    {
+        $days = Settings::runtimeDays(Settings::load($sectionId));
+        return $days > 0 && ($ownerEmail !== '' || $ownerUserId > 0) ? $now + $days * 86400 : 0;
+    }
+
+    /**
+     * Whether the owner may extend now: a runtime is set and the entry is
+     * expired or within the reminder period.
+     */
+    public static function extendable(array $item, array $settings): bool
+    {
+        $days = Settings::runtimeDays($settings);
+        if ($days === 0 || $item['expires_at'] === 0 || $item['status'] !== 'published') {
+            return false;
+        }
+        $window = max(0, (int) ($settings['remind_days'] ?? 7)) * 86400;
+        return $item['expires_at'] - $window <= time();
+    }
+
+    /** One more runtime, counted from today or from the expiry, whichever is later. */
+    public static function extend(int $sectionId, array $item, array $settings): bool
+    {
+        global $database;
+        $from = max(time(), $item['expires_at']);
+        $database->query(
+            'UPDATE `' . self::TABLE . '` SET `expires_at` = ?, `reminded_at` = 0, `updated_at` = ? WHERE `item_id` = ? AND `section_id` = ?',
+            [$from + Settings::runtimeDays($settings) * 86400, time(), $item['item_id'], $sectionId]
+        );
+        return !$database->hasError();
+    }
+
+    /**
+     * Published entries of owners that expire within $days and whose owner
+     * was not reminded yet.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function dueForReminder(int $sectionId, int $days): array
+    {
+        global $database;
+        $now = time();
+        $rows = $database->fetchAll(
+            'SELECT * FROM `' . self::TABLE . '`
+              WHERE `section_id` = ? AND `status` = ? AND `owner_email` <> ? AND `reminded_at` = 0
+                AND `expires_at` > ? AND `expires_at` <= ?
+              ORDER BY `expires_at` LIMIT 50',
+            [$sectionId, 'published', '', $now, $now + $days * 86400]
+        );
+        return array_map([self::class, 'decode'], $rows);
+    }
+
+    public static function markReminded(int $sectionId, int $itemId): void
+    {
+        global $database;
+        $database->query(
+            'UPDATE `' . self::TABLE . '` SET `reminded_at` = ? WHERE `item_id` = ? AND `section_id` = ?',
+            [time(), $itemId, $sectionId]
+        );
+    }
+
+    /**
+     * The entries of a frontend account in the section, newest first.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function ownedByUser(int $sectionId, int $userId): array
+    {
+        global $database;
+        if ($userId <= 0) {
+            return [];
+        }
+        $rows = $database->fetchAll(
+            'SELECT * FROM `' . self::TABLE . '` WHERE `section_id` = ? AND `owner_user_id` = ? ORDER BY `created_at` DESC LIMIT 100',
+            [$sectionId, $userId]
+        );
+        return array_map([self::class, 'decode'], $rows);
     }
 
     /**
@@ -288,8 +383,8 @@ final class Items
     {
         $data = json_decode((string) ($row['data'] ?? ''), true);
         $row['data'] = is_array($data) ? $data : [];
-        foreach (['item_id', 'section_id', 'page_id', 'created_at', 'updated_at', 'published_at', 'expires_at'] as $key) {
-            $row[$key] = (int) $row[$key];
+        foreach (['item_id', 'section_id', 'page_id', 'created_at', 'updated_at', 'published_at', 'expires_at', 'owner_user_id', 'reminded_at'] as $key) {
+            $row[$key] = (int) ($row[$key] ?? 0);
         }
         return $row;
     }

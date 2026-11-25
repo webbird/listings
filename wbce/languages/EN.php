@@ -180,6 +180,60 @@ $MOD_LISTINGS['MAIL_ADMIN_WAITING_TEXT']    = 'An entry in "%s" was confirmed an
 $MOD_LISTINGS['MAIL_ADMIN_NEW_SUBJECT']     = 'New entry: %s';
 $MOD_LISTINGS['MAIL_ADMIN_NEW_TEXT']        = 'An entry in "%s" was confirmed and is online:';
 
+// 0.3: accounts, runtime, contact
+$MOD_LISTINGS['OWNER_MODE']         = 'Owners';
+$MOD_LISTINGS['OWNER_MODE_EMAIL']   = 'Without an account: links by e-mail';
+$MOD_LISTINGS['OWNER_MODE_ACCOUNT'] = 'With a frontend account of the website';
+$MOD_LISTINGS['HELP_OWNER_MODE']    = 'With an account owners log in, find their entries under "My entries" and need no confirmation link.';
+$MOD_LISTINGS['WARN_NO_LOGIN']      = 'The frontend login of the website is switched off (Settings). Owners with an account cannot log in.';
+$MOD_LISTINGS['SETTINGS_RUNTIME']   = 'Runtime';
+$MOD_LISTINGS['RUNTIME_DAYS']       = 'Runtime in days';
+$MOD_LISTINGS['HELP_RUNTIME']       = 'Entries of owners expire this many days after their first publication. 0: never. Your own entries keep the date set in the entry.';
+$MOD_LISTINGS['REMIND_DAYS']        = 'Reminder (days before)';
+$MOD_LISTINGS['HELP_REMIND']        = 'The owner gets a mail with a link to extend. From then on, and after the expiry, the entry can be extended by one runtime. 0: no reminder, extending only after the expiry.';
+$MOD_LISTINGS['SETTINGS_CONTACT']   = 'Contact';
+$MOD_LISTINGS['CONTACT']            = 'Contact form';
+$MOD_LISTINGS['CONTACT_ON']         = 'Visitors may write to the owner from the detail page';
+$MOD_LISTINGS['HELP_CONTACT']       = 'The address of the owner stays hidden; the answer goes straight to the sender. Only for entries with an owner address.';
+$MOD_LISTINGS['ERR_RUNTIME']        = 'The runtime must be a number from 0 to %d.';
+$MOD_LISTINGS['ERR_REMIND']         = 'The reminder must be a number from 0 to 365.';
+
+$MOD_LISTINGS['INTRO_NEW_ACCOUNT']          = 'The entry is published right after sending. You find it under "My entries".';
+$MOD_LISTINGS['INTRO_NEW_ACCOUNT_APPROVAL'] = 'After sending the entry is checked and then published. You find it under "My entries".';
+$MOD_LISTINGS['MY_ENTRIES']        = 'My entries';
+$MOD_LISTINGS['NO_OWN_ENTRIES']    = 'You have no entries here yet.';
+$MOD_LISTINGS['ACTIONS']           = 'Actions';
+$MOD_LISTINGS['LOGIN_REQUIRED']    = 'Please log in';
+$MOD_LISTINGS['INTRO_LOGIN']       = 'Entries here belong to an account of this website. Log in to add or change entries.';
+$MOD_LISTINGS['LOGIN']             = 'Log in';
+$MOD_LISTINGS['SIGNUP']            = 'Create an account';
+$MOD_LISTINGS['ERR_NO_LOGIN']      = 'Logging in is switched off on this website, so entries cannot be added here.';
+$MOD_LISTINGS['EXPIRES_ON']        = 'It runs until %s.';
+$MOD_LISTINGS['EXPIRED_ON']        = 'It expired on %s and is no longer shown.';
+$MOD_LISTINGS['EXPIRED']           = 'expired';
+$MOD_LISTINGS['EXTEND']            = 'Extend';
+$MOD_LISTINGS['EXTEND_ENTRY']      = 'Extend "%s"';
+$MOD_LISTINGS['MSG_EXTENDED']      = 'The entry is extended until %s.';
+$MOD_LISTINGS['MSG_ACCOUNT_WAITING']   = 'Thank you! Your entry is published as soon as it has been checked.';
+$MOD_LISTINGS['MSG_ACCOUNT_PUBLISHED'] = 'Thank you! Your entry is published.';
+$MOD_LISTINGS['ERR_NOT_YOURS']         = 'This entry does not exist or does not belong to your account.';
+$MOD_LISTINGS['ERR_TOO_MANY_CONTACT']  = 'You have sent several messages in a short time. Please try again in an hour.';
+$MOD_LISTINGS['ERR_NOT_EXTENDABLE'] = 'This entry cannot be extended (yet).';
+
+$MOD_LISTINGS['CONTACT_TITLE']     = 'Contact';
+$MOD_LISTINGS['CONTACT_NAME']      = 'Your name';
+$MOD_LISTINGS['CONTACT_EMAIL']     = 'Your e-mail address';
+$MOD_LISTINGS['CONTACT_MESSAGE']   = 'Message';
+$MOD_LISTINGS['CONTACT_CONSENT']   = 'I agree that my name, address and message are passed on to the owner of this entry.';
+$MOD_LISTINGS['CONTACT_SEND']      = 'Send message';
+$MOD_LISTINGS['ERR_CONTACT_SHORT'] = 'Please write a few more words (at least 10 characters).';
+$MOD_LISTINGS['MSG_CONTACT_SENT']  = 'Thank you, your message is on its way.';
+
+$MOD_LISTINGS['MAIL_REMINDER_SUBJECT'] = 'Your entry "%1$s" expires on %2$s';
+$MOD_LISTINGS['MAIL_REMINDER_TEXT']    = 'Your entry "%1$s" in "%2$s" expires on %3$s and is then no longer shown. To keep it online, extend it here:';
+$MOD_LISTINGS['MAIL_CONTACT_SUBJECT']  = 'Message about your entry "%s"';
+$MOD_LISTINGS['MAIL_CONTACT_TEXT']     = 'Someone wrote to you about your entry "%1$s" in "%2$s" on %3$s. Your address was not shown; to answer, simply reply to this mail.';
+
 // messages
 $MOD_LISTINGS['SAVED_ITEM']     = 'Entry "%s" saved.';
 $MOD_LISTINGS['DELETED_ITEM']   = 'Entry "%s" deleted.';

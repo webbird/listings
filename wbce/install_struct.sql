@@ -39,10 +39,12 @@ CREATE TABLE IF NOT EXISTS `{TP}mod_listings_items` (
     `updated_at`    INT NOT NULL DEFAULT 0,
     `published_at`  INT NOT NULL DEFAULT 0,
     `expires_at`    INT NOT NULL DEFAULT 0,
+    `reminded_at`   INT NOT NULL DEFAULT 0,
     `modified_by`   INT NOT NULL DEFAULT 0,
     PRIMARY KEY (`item_id`),
     UNIQUE KEY `section_slug` (`section_id`, `slug`),
-    KEY `section_status` (`section_id`, `status`)
+    KEY `section_status` (`section_id`, `status`),
+    KEY `owner_user` (`section_id`, `owner_user_id`)
 ) {TABLE_ENGINE};
 
 -- confirmation and edit links; only the SHA-256 hash of a token is stored

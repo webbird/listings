@@ -74,6 +74,50 @@ final class Mail
         );
     }
 
+    /**
+     * To the owner: the entry expires soon. $token is an extend link; null
+     * (owner with an account) links to the owner's list instead.
+     */
+    public static function reminder(int $sectionId, array $item, ?string $token): bool
+    {
+        $page = self::page($sectionId);
+        if ($page === null || $item['owner_email'] === '') {
+            return false;
+        }
+        $t = self::texts($page['language']);
+        $date = date('d.m.Y', $item['expires_at']);
+        $url = $token === null
+            ? View::formUrl($page['url'], $sectionId, 'mine')
+            : View::tokenUrl($page['url'], View::PARAM_EXTEND, $token);
+        return self::send(
+            $item['owner_email'],
+            $t('MAIL_REMINDER_SUBJECT', $item['title'], $date),
+            $t('MAIL_REMINDER_TEXT', $item['title'], $page['title'], $date) . "\n\n" . $url
+                . "\n\n" . $t('MAIL_FOOTER', WEBSITE_TITLE)
+        );
+    }
+
+    /**
+     * A visitor writes to the owner. The owner's address stays hidden; the
+     * answer goes to the visitor through Reply-To.
+     */
+    public static function contact(int $sectionId, array $item, string $name, string $email, string $message): bool
+    {
+        $page = self::page($sectionId);
+        if ($page === null || $item['owner_email'] === '') {
+            return false;
+        }
+        $t = self::texts($page['language']);
+        return self::send(
+            $item['owner_email'],
+            $t('MAIL_CONTACT_SUBJECT', $item['title']),
+            $t('MAIL_CONTACT_TEXT', $item['title'], $page['title'], WEBSITE_TITLE) . "\n\n"
+                . $t('CONTACT_NAME') . ': ' . $name . "\n" . $t('CONTACT_EMAIL') . ': ' . $email . "\n\n"
+                . $message . "\n\n" . $t('MAIL_FOOTER', WEBSITE_TITLE),
+            $email
+        );
+    }
+
     /** To notify_email: a confirmed entry is waiting, or (without approval) went online. */
     public static function notifyAdmin(int $sectionId, array $item, bool $waiting): bool
     {

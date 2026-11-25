@@ -1,0 +1,47 @@
+{#
+    listings/twig/view_mine.twig – the entries of the logged-in owner (account mode)
+#}
+<div class="mod_listings lst-owner" id="lst-{{ section_id }}">
+    <h2>{{ t('MY_ENTRIES') }}</h2>
+    {% include '_messages.twig' %}
+    {% if items is empty %}
+        <p class="lst-intro">{{ t('NO_OWN_ENTRIES') }}</p>
+    {% else %}
+    <table class="lst-mine">
+        <thead>
+            <tr>
+                <th scope="col">{{ t('TITLE') }}</th>
+                <th scope="col">{{ t('STATUS') }}</th>
+                <th scope="col">{{ t('EXPIRES') }}</th>
+                <th scope="col"><span class="lst-sr">{{ t('ACTIONS') }}</span></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <th scope="row"><a href="{{ item.edit_url }}">{{ item.title }}</a></th>
+                <td>{{ t('STATUS_' ~ item.status|upper) }}</td>
+                <td>{% if item.expires_at > 0 %}{{ item.expires_at|date('d.m.Y') }}{% if item.expired %} ({{ t('EXPIRED') }}){% endif %}{% endif %}</td>
+                <td class="lst-actions">
+                    <a href="{{ item.edit_url }}">{{ L_('TEXT:MODIFY') }}</a>
+                    {% if item.extendable %}
+                    <form method="post" action="{{ action }}">
+                        <input type="hidden" name="section_id" value="{{ section_id }}">
+                        {{ FTAN|raw }}
+                        <input type="hidden" name="lst_action" value="extend">
+                        <input type="hidden" name="lst_back" value="mine">
+                        <input type="hidden" name="lst_item" value="{{ item.key }}">
+                        <button type="submit">{{ t('EXTEND') }}</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    <p class="lst-buttons">
+        <a href="{{ new_url }}">{{ t('ADD_ENTRY') }}</a>
+        <a href="{{ list_url }}">{{ t('BACK_TO_LIST') }}</a>
+    </p>
+</div>

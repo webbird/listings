@@ -25,7 +25,27 @@ final class Settings
         'recheck'       => '1',   // a changed published entry waits again
         'captcha'       => '1',
         'notify_email'  => '',    // new waiting entries are reported here
+        // 0.3
+        'owner_mode'    => 'email',  // email: links by mail; account: WBCE frontend account
+        'contact'       => '0',      // contact form to the owner on the detail page
+        'runtime_days'  => '0',      // entries of owners expire after this; 0 = never
+        'remind_days'   => '7',      // the owner is reminded this many days before
+        'reminder_run'  => '0',      // last run of the reminders (no cron in WBCE)
     ];
+
+    public const OWNER_MODES = ['email', 'account'];
+
+    public const RUNTIME_MAX = 3650;
+
+    public static function accountMode(array $settings): bool
+    {
+        return ($settings['owner_mode'] ?? 'email') === 'account';
+    }
+
+    public static function runtimeDays(array $settings): int
+    {
+        return max(0, min(self::RUNTIME_MAX, (int) ($settings['runtime_days'] ?? 0)));
+    }
 
     public static function on(array $settings, string $name): bool
     {

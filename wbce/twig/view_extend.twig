@@ -1,0 +1,15 @@
+{#
+    listings/twig/view_extend.twig – the link of the reminder mail: a button, so mail
+    scanners that open links in advance do not extend for the owner
+#}
+<div class="mod_listings lst-owner" id="lst-{{ section_id }}">
+    <h2>{{ t('EXTEND_ENTRY', item.title) }}</h2>
+    <p class="lst-intro">{{ t(expired ? 'EXPIRED_ON' : 'EXPIRES_ON', item.expires_at|date('d.m.Y')) }}</p>
+    <form method="post" action="{{ action }}">
+        <input type="hidden" name="section_id" value="{{ section_id }}">
+        {{ FTAN|raw }}
+        <input type="hidden" name="lst_action" value="extend">
+        <input type="hidden" name="token" value="{{ token }}">
+        <button type="submit">{{ t('EXTEND') }}</button>
+    </form>
+</div>

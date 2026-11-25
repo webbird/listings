@@ -1,28 +1,46 @@
 {#
-    listings/twig/view_form.twig – an owner adds (mode new) or edits (mode edit) an entry
+    listings/twig/view_form.twig – an owner adds (mode new) or edits (mode edit) an entry.
+    Editing is allowed by a mailed link (token) or, with an account, by item_key.
 #}
 {% set is_new = mode == 'new' %}
+{% set auth %}
+    {% if token|default('') != '' %}<input type="hidden" name="token" value="{{ token }}">{% else %}<input type="hidden" name="lst_item" value="{{ item_key|default('') }}">{% endif %}
+{% endset %}
 <div class="mod_listings lst-owner" id="lst-{{ section_id }}">
     <h2>{{ is_new ? t('NEW_ENTRY') : t('EDIT_ITEM', item.title) }}</h2>
     {% include '_messages.twig' %}
-    <p class="lst-intro">{{ is_new ? t(approval ? 'INTRO_NEW_APPROVAL' : 'INTRO_NEW') : t('INTRO_STATUS_' ~ item.status|upper) }}</p>
+    {% if is_new %}
+        <p class="lst-intro">{{ t(account ? (approval ? 'INTRO_NEW_ACCOUNT_APPROVAL' : 'INTRO_NEW_ACCOUNT') : (approval ? 'INTRO_NEW_APPROVAL' : 'INTRO_NEW')) }}</p>
+    {% else %}
+        <p class="lst-intro">{{ t('INTRO_STATUS_' ~ item.status|upper) }}
+            {% if item.expires_at > 0 %}{{ t(expired ? 'EXPIRED_ON' : 'EXPIRES_ON', item.expires_at|date('d.m.Y')) }}{% endif %}</p>
+        {% if extendable %}
+        <form method="post" action="{{ action }}" class="lst-extend">
+            <input type="hidden" name="section_id" value="{{ section_id }}">
+            {{ FTAN|raw }}
+            <input type="hidden" name="lst_action" value="extend">
+            {{ auth }}
+            <button type="submit">{{ t('EXTEND') }}</button>
+        </form>
+        {% endif %}
+    {% endif %}
 
     <form method="post" action="{{ action }}" class="lst-owner-form">
         <input type="hidden" name="section_id" value="{{ section_id }}">
         {{ FTAN|raw }}
         <input type="hidden" name="lst_action" value="{{ is_new ? 'create' : 'update' }}">
-        {% if not is_new %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+        {% if not is_new %}{{ auth }}{% endif %}
 
         <div class="lst-row">
             <label for="lst_title_{{ section_id }}">{{ t('TITLE') }} *</label>
             <input type="text" id="lst_title_{{ section_id }}" name="title" maxlength="255" required value="{{ values.title|default('') }}">
         </div>
 
-        {% if is_new %}
+        {% if is_new and not account %}
         <div class="lst-row">
             <label for="lst_email_{{ section_id }}">{{ t('OWNER_EMAIL') }} *</label>
-            <input type="email" id="lst_email_{{ section_id }}" name="owner_email" maxlength="255" required autocomplete="email" value="{{ values.owner_email|default('') }}">
-            <p class="lst-help">{{ t('HELP_OWNER_EMAIL') }}</p>
+            <input type="email" id="lst_email_{{ section_id }}" name="owner_email" maxlength="255" required autocomplete="email" aria-describedby="lst_email_help_{{ section_id }}" value="{{ values.owner_email|default('') }}">
+            <p class="lst-help" id="lst_email_help_{{ section_id }}">{{ t('HELP_OWNER_EMAIL') }}</p>
         </div>
         {% endif %}
 
@@ -55,6 +73,7 @@
 
         <div class="lst-buttons">
             <button type="submit">{{ is_new ? t('SUBMIT_NEW') : L_('TEXT:SAVE') }}</button>
+            {% if account %}<a href="{{ link_url }}">{{ t('MY_ENTRIES') }}</a>{% endif %}
             <a href="{{ list_url }}">{{ t('BACK_TO_LIST') }}</a>
         </div>
     </form>
@@ -64,7 +83,7 @@
         <input type="hidden" name="section_id" value="{{ section_id }}">
         {{ FTAN|raw }}
         <input type="hidden" name="lst_action" value="delete">
-        <input type="hidden" name="token" value="{{ token }}">
+        {{ auth }}
         <button type="submit">{{ t('DELETE_ENTRY') }}</button>
     </form>
     {% endif %}

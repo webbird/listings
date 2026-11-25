@@ -1,0 +1,16 @@
+{#
+    listings/twig/view_login.twig – account mode: owners log in first
+#}
+<div class="mod_listings lst-owner" id="lst-{{ section_id }}">
+    <h2>{{ t('LOGIN_REQUIRED') }}</h2>
+    {% if login_url %}
+        <p class="lst-intro">{{ t('INTRO_LOGIN') }}</p>
+        <p class="lst-buttons">
+            <a class="lst-login" href="{{ login_url }}">{{ t('LOGIN') }}</a>
+            {% if signup_url %}<a href="{{ signup_url }}">{{ t('SIGNUP') }}</a>{% endif %}
+            <a href="{{ list_url }}">{{ t('BACK_TO_LIST') }}</a>
+        </p>
+    {% else %}
+        <p class="lst-message lst-error" role="alert">{{ t('ERR_NO_LOGIN') }}</p>
+    {% endif %}
+</div>

@@ -33,6 +33,16 @@
             </div>
         </div>
         <div class="lst-row">
+            <label for="lst_owner_mode">{{ t('OWNER_MODE') }}</label>
+            <div>
+                <select id="lst_owner_mode" name="owner_mode" aria-describedby="lst_owner_mode_help">
+                    {% for mode in owner_modes %}<option value="{{ mode }}"{% if form.owner_mode|default('email') == mode %} selected{% endif %}>{{ t('OWNER_MODE_' ~ mode|upper) }}</option>{% endfor %}
+                </select>
+                <p class="lst-help" id="lst_owner_mode_help">{{ t('HELP_OWNER_MODE') }}</p>
+                {% if not login_available %}<p class="lst-message lst-error">{{ t('WARN_NO_LOGIN') }}</p>{% endif %}
+            </div>
+        </div>
+        <div class="lst-row">
             <span class="lst-label">{{ t('APPROVAL') }}</span>
             <div>
                 <label><input type="checkbox" name="approval" value="1"{% if form.approval|default('0') == '1' %} checked{% endif %}> {{ t('APPROVAL_ON') }}</label><br>
@@ -51,6 +61,35 @@
             <div>
                 <label><input type="checkbox" name="captcha" value="1"{% if form.captcha|default('0') == '1' %} checked{% endif %}{% if not captcha_available %} disabled{% endif %}> {{ t('CAPTCHA_ON') }}</label>
                 <p class="lst-help">{{ t(captcha_available ? 'HELP_CAPTCHA' : 'HELP_NO_CAPTCHA') }}</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>{{ t('SETTINGS_RUNTIME') }}</legend>
+        <div class="lst-row">
+            <label for="lst_runtime">{{ t('RUNTIME_DAYS') }}</label>
+            <div>
+                <input type="number" id="lst_runtime" name="runtime_days" min="0" max="{{ runtime_max }}" value="{{ form.runtime_days|default('0') }}" aria-describedby="lst_runtime_help">
+                <p class="lst-help" id="lst_runtime_help">{{ t('HELP_RUNTIME') }}</p>
+            </div>
+        </div>
+        <div class="lst-row">
+            <label for="lst_remind">{{ t('REMIND_DAYS') }}</label>
+            <div>
+                <input type="number" id="lst_remind" name="remind_days" min="0" max="365" value="{{ form.remind_days|default('7') }}" aria-describedby="lst_remind_help">
+                <p class="lst-help" id="lst_remind_help">{{ t('HELP_REMIND') }}</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>{{ t('SETTINGS_CONTACT') }}</legend>
+        <div class="lst-row">
+            <span class="lst-label">{{ t('CONTACT') }}</span>
+            <div>
+                <label><input type="checkbox" name="contact" value="1"{% if form.contact|default('0') == '1' %} checked{% endif %}> {{ t('CONTACT_ON') }}</label>
+                <p class="lst-help">{{ t('HELP_CONTACT') }}</p>
             </div>
         </div>
     </fieldset>

@@ -28,6 +28,7 @@ final class Backend
 
         // WBCE has no cron: unconfirmed frontend entries are also removed on backend calls
         Items::purgeUnconfirmed($sectionId);
+        Reminders::run($sectionId, Settings::load($sectionId));
 
         $flash = Module::takeFlash($sectionId);
         $vars = [
@@ -129,6 +130,9 @@ final class Backend
                 $vars['sorts'] = array_keys(Settings::SORTS);
                 $vars['per_page_max'] = Settings::PER_PAGE_MAX;
                 $vars['captcha_available'] = class_exists('Captcha');
+                $vars['owner_modes'] = Settings::OWNER_MODES;
+                $vars['login_available'] = defined('FRONTEND_LOGIN') && FRONTEND_LOGIN;
+                $vars['runtime_max'] = Settings::RUNTIME_MAX;
                 break;
         }
 

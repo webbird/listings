@@ -16,9 +16,10 @@ final class Tokens
 
     public const CONFIRM = 'confirm';
     public const EDIT = 'edit';
+    public const EXTEND = 'extend';
 
-    /** Lifetime in seconds. */
-    public const TTL = [self::CONFIRM => 86400, self::EDIT => 3600];
+    /** Lifetime in seconds; the reminder link lasts beyond the expiry, so a late reader can still extend. */
+    public const TTL = [self::CONFIRM => 86400, self::EDIT => 3600, self::EXTEND => 30 * 86400];
 
     /** Mails per address and section within an hour; protects strangers' inboxes. */
     public const MAX_PER_HOUR = 5;
