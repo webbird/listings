@@ -1,0 +1,77 @@
+{#
+    listings/twig/modify_item.twig – add or edit an entry with all fields, also the admin's
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<h3>{{ item is null ? t('NEW_ITEM') : t('EDIT_ITEM', item.title) }}</h3>
+<form method="post" action="{{ action }}" class="lst-form">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="item_save">
+    {% if item is not null %}<input type="hidden" name="lst_item" value="{{ idkey('item', item.item_id) }}">{% endif %}
+
+    <div class="lst-row">
+        <label for="lst_title">{{ t('TITLE') }} *</label>
+        <div><input type="text" id="lst_title" name="title" maxlength="255" required value="{{ form.title|default('') }}"></div>
+    </div>
+
+    {% for f in fields %}
+        {% if f.type == 'heading' %}
+            {% include '_field.twig' with {f: f, v: null} only %}
+        {% else %}
+        <div class="lst-row">
+            <label for="lst_f_{{ f.name }}">
+                {{ f.label }}{{ f.required ? ' *' }}
+                {% if f.visibility == 'admin' %}<span class="lst-badge">{{ t('VISIBILITY_ADMIN') }}</span>
+                {% elseif f.visibility == 'owner' %}<span class="lst-badge">{{ t('NOT_PUBLIC') }}</span>{% endif %}
+            </label>
+            <div>
+                {% include '_field.twig' with {f: f, v: form.fields[f.name]|default(null)} only %}
+                {% if f.help != '' %}<p class="lst-help">{{ f.help }}</p>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    <fieldset class="lst-meta">
+        <legend>{{ t('PUBLICATION') }}</legend>
+        <div class="lst-row">
+            <label for="lst_status">{{ t('STATUS') }}</label>
+            <div>
+                <select id="lst_status" name="status">
+                    {% for s in statuses %}<option value="{{ s }}"{% if form.status|default('draft') == s %} selected{% endif %}>{{ t('STATUS_' ~ s|upper) }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="lst-row">
+            <label for="lst_owner_email">{{ t('OWNER_EMAIL') }}</label>
+            <div>
+                <input type="email" id="lst_owner_email" name="owner_email" maxlength="255" value="{{ form.owner_email|default('') }}">
+                <p class="lst-help">{{ t('HELP_OWNER_EMAIL_ADMIN') }}</p>
+            </div>
+        </div>
+        <div class="lst-row">
+            <label for="lst_expires">{{ t('EXPIRES') }}</label>
+            <div>
+                <input type="date" id="lst_expires" name="expires" value="{{ form.expires|default('') }}">
+                <p class="lst-help">{{ t('HELP_EXPIRES') }}</p>
+            </div>
+        </div>
+        <div class="lst-row">
+            <label for="lst_slug">{{ t('SLUG') }}</label>
+            <div>
+                <input type="text" id="lst_slug" name="slug" maxlength="180" value="{{ form.slug|default('') }}">
+                <p class="lst-help">{{ t('HELP_SLUG') }}</p>
+            </div>
+        </div>
+        {% if item is not null %}
+        <p class="lst-help">{{ t('CREATED') }}: {{ format_time(item.created_at) }} · {{ t('UPDATED') }}: {{ format_time(item.updated_at) }}</p>
+        {% endif %}
+    </fieldset>
+
+    <div class="lst-buttons">
+        <button type="submit" name="lst_then" value="list">{{ L_('TEXT:SAVE') }}</button>
+        <button type="submit" name="lst_then" value="edit">{{ t('SAVE_CONTINUE') }}</button>
+        <a href="{{ url({lst_view: 'items'}) }}">{{ L_('TEXT:CANCEL') }}</a>
+    </div>
+</form>
+{% endblock %}

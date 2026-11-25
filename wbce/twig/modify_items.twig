@@ -1,0 +1,83 @@
+{#
+    listings/twig/modify_items.twig – the entries of the directory, waiting ones on top
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<div class="lst-toolbar">
+    <a class="lst-button" href="{{ url({lst_view: 'item'}) }}">{{ t('NEW_ITEM') }}</a>
+    <span class="lst-filter">
+        {% for key, count in counts %}
+            {% if key == '' or count > 0 or status == key %}
+                <a href="{{ url(key == '' ? {lst_view: 'items'} : {lst_view: 'items', lst_status: key}) }}"
+                   class="{{ status == key ? 'active' }}{{ key == 'pending' ? ' lst-waiting' }}">
+                    {{ key == '' ? t('ALL') : t('STATUS_' ~ key|upper) }} ({{ count }})
+                </a>
+            {% endif %}
+        {% endfor %}
+    </span>
+</div>
+
+{% if fields is empty %}
+    <p class="lst-hint">{{ t('HINT_NO_FIELDS') }} <a href="{{ url({lst_view: 'field'}) }}">{{ t('NEW_FIELD') }}</a></p>
+{% endif %}
+
+{% if items is empty %}
+    <p>{{ t('NO_ENTRIES') }}</p>
+{% else %}
+<table class="lst-table">
+    <thead>
+        <tr>
+            <th>{{ t('TITLE') }}</th>
+            <th>{{ t('STATUS') }}</th>
+            <th>{{ t('UPDATED') }}</th>
+            <th>{{ t('EXPIRES') }}</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in items %}
+        {# a draft with an owner address was added in the frontend and is not confirmed yet #}
+        {% set status_key = item.status == 'draft' and item.owner_email != '' ? 'UNCONFIRMED' : item.status|upper %}
+        {% set key = idkey('item', item.item_id) %}
+        {% set edit = url({lst_view: 'item', lst_item: item.item_id}) %}
+        <tr{% if item.status == 'pending' %} class="lst-row-waiting"{% endif %}>
+            <td>
+                <a href="{{ edit }}">{{ item.title }}</a>
+                {% if item.owner_email != '' %}<br><span class="lst-help">{{ item.owner_email }}</span>{% endif %}
+            </td>
+            <td><span class="lst-status lst-status-{{ item.status }}">{{ t('STATUS_' ~ status_key) }}</span></td>
+            <td>{{ format_time(item.updated_at) }}</td>
+            <td{% if item.expires_at > 0 and item.expires_at <= now %} class="lst-expired"{% endif %}>{{ item.expires_at > 0 ? item.expires_at|date('Y-m-d') }}</td>
+            <td class="lst-actions">
+                {% if item.status == 'pending' %}
+                    {% for to, label in {published: 'APPROVE', rejected: 'REJECT'} %}
+                    <form method="post" action="{{ action }}">
+                        {% include '_hidden.twig' %}
+                        <input type="hidden" name="lst_action" value="item_status">
+                        <input type="hidden" name="lst_status" value="{{ to }}">
+                        <input type="hidden" name="lst_item" value="{{ key }}">
+                        <button type="submit" class="lst-button lst-{{ label|lower }}">{{ t(label) }}</button>
+                    </form>
+                    {% endfor %}
+                {% endif %}
+                <a href="{{ edit }}">{{ L_('TEXT:MODIFY') }}</a>
+                <form method="post" action="{{ action }}" data-lst-confirm="{{ t('CONFIRM_DELETE_ITEM', item.title) }}">
+                    {% include '_hidden.twig' %}
+                    <input type="hidden" name="lst_action" value="item_delete">
+                    <input type="hidden" name="lst_item" value="{{ key }}">
+                    <button type="submit" class="lst-link-button">{{ L_('TEXT:DELETE') }}</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if pages > 1 %}
+<nav class="lst-pager">
+    {% for p in 1..pages %}
+        {% if p == page %}<strong>{{ p }}</strong>{% else %}<a href="{{ url({lst_view: 'items', lst_page: p}|merge(status != '' ? {lst_status: status} : {})) }}">{{ p }}</a>{% endif %}
+    {% endfor %}
+</nav>
+{% endif %}
+{% endif %}
+{% endblock %}

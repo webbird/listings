@@ -1,0 +1,15 @@
+{#
+    listings/twig/view_confirm.twig – confirm a new entry. A button, not the link itself:
+    mail scanners open links in advance and would confirm for the visitor.
+#}
+<div class="mod_listings lst-owner" id="lst-{{ section_id }}">
+    <h2>{{ t('CONFIRM_ENTRY') }}</h2>
+    <p class="lst-intro">{{ t('INTRO_CONFIRM') }}</p>
+    <form method="post" action="{{ action }}">
+        <input type="hidden" name="section_id" value="{{ section_id }}">
+        {{ FTAN|raw }}
+        <input type="hidden" name="lst_action" value="confirm">
+        <input type="hidden" name="token" value="{{ token }}">
+        <button type="submit">{{ t('CONFIRM_BUTTON') }}</button>
+    </form>
+</div>

@@ -1,7 +1,7 @@
 <?php
 /**
  * Listings – backend of a section: entries, fields, layouts, settings.
- * Views are PHP templates in backend/; every form posts to save.php.
+ * Views are the modify_*.twig templates in twig/; every form posts to save.php.
  * @module listings  @author Bianka Martinovic
  * @license GNU General Public License   @platform WBCE 1.7.0+
  */
@@ -31,17 +31,13 @@ final class Backend
 
         $flash = Module::takeFlash($sectionId);
         $vars = [
-            'admin'      => $admin,
             'page_id'    => $pageId,
             'section_id' => $sectionId,
             'view'       => $view,
             'action'     => Module::saveUrl(),
             'errors'     => is_array($flash['errors'] ?? null) ? $flash['errors'] : [],
             'old'        => is_array($flash['old'] ?? null) ? $flash['old'] : null,
-            'url'        => static fn (array $params = []) => Module::modifyUrl($pageId, $sectionId, $params),
-            'hidden'     => '<input type="hidden" name="page_id" value="' . $pageId . '">'
-                          . '<input type="hidden" name="section_id" value="' . $sectionId . '">'
-                          . $admin->getFTAN(),
+            'now'        => time(),
         ];
 
         $vars['fields'] = Fields::forSection($sectionId);
@@ -63,7 +59,7 @@ final class Backend
                 $pages = max(1, (int) ceil($total / self::ITEMS_PER_PAGE));
                 $page = max(1, min($pages, (int) $param('lst_page')));
                 $vars += [
-                    'status' => $status,
+                    'status' => $status ?? '',
                     'total'  => $total,
                     'page'   => $page,
                     'pages'  => $pages,
@@ -77,6 +73,7 @@ final class Backend
 
             case 'item':
                 $vars['item'] = $item;
+                $vars['statuses'] = Items::STATUSES;
                 $vars['form'] = $vars['old'] ?? [
                     'title'   => $item['title'] ?? '',
                     'slug'    => $item['slug'] ?? '',
@@ -92,6 +89,8 @@ final class Backend
                 $field = $fieldId > 0 ? Fields::find($sectionId, $fieldId) : null;
                 $vars['field'] = $field;
                 $vars['name_locked'] = $field !== null && Items::count($sectionId) > 0;
+                $vars['types'] = FieldTypes::TYPES;
+                $vars['visibilities'] = Fields::VISIBILITY;
                 $vars['form'] = $vars['old'] ?? [
                     'label'      => $field['label'] ?? '',
                     'name'       => $field['name'] ?? '',
@@ -116,25 +115,26 @@ final class Backend
                     $vars['layouts'][$name] = $vars['old']['layout_' . $name] ?? Layouts::get($settings, $name);
                     $vars['custom'][$name] = trim($settings['layout_' . $name]) !== '';
                 }
+                $vars['field_keys'] = array_values(array_map(
+                    static fn ($f) => strtoupper($f['name']),
+                    // layouts receive the public fields only
+                    array_filter($vars['fields'], static fn ($f) => FieldTypes::stores($f['type']) && $f['visibility'] === 'public')
+                ));
                 break;
 
             case 'settings':
                 $vars['form'] = $vars['old'] ?? Settings::load($sectionId);
+                $vars['sorts'] = array_keys(Settings::SORTS);
+                $vars['per_page_max'] = Settings::PER_PAGE_MAX;
+                $vars['captcha_available'] = class_exists('Captcha');
                 break;
         }
 
-        return self::template('nav', $vars) . self::template($view, $vars);
-    }
-
-    /**
-     * Renders backend/<name>.php with $v as its only variable.
-     *
-     * @param array<string, mixed> $v
-     */
-    private static function template(string $name, array $v): string
-    {
-        ob_start();
-        include dirname(__DIR__) . '/backend/' . $name . '.php';
-        return (string) ob_get_clean();
+        unset($vars['old']);
+        $twig = Module::twig([
+            'url'   => static fn (array $params = []): string => Module::modifyUrl($pageId, $sectionId, $params),
+            'idkey' => static fn (string $purpose, int $id): string => Module::idKey($admin, $purpose, $id),
+        ]);
+        return $twig->render('modify_' . $view . '.twig', $vars);
     }
 }

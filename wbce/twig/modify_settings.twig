@@ -1,0 +1,62 @@
+{#
+    listings/twig/modify_settings.twig – list settings and entries by visitors
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<form method="post" action="{{ action }}" class="lst-form">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="settings_save">
+
+    <fieldset>
+        <legend>{{ t('SETTINGS_LIST') }}</legend>
+        <div class="lst-row">
+            <label for="lst_per_page">{{ t('PER_PAGE') }}</label>
+            <div><input type="number" id="lst_per_page" name="per_page" min="1" max="{{ per_page_max }}" required value="{{ form.per_page|default('20') }}"></div>
+        </div>
+        <div class="lst-row">
+            <label for="lst_sort">{{ t('SORT') }}</label>
+            <div>
+                <select id="lst_sort" name="sort">
+                    {% for sort in sorts %}<option value="{{ sort }}"{% if form.sort|default('') == sort %} selected{% endif %}>{{ t('SORT_' ~ sort|upper) }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>{{ t('SETTINGS_FRONTEND') }}</legend>
+        <div class="lst-row">
+            <span class="lst-label">{{ t('FRONTEND') }}</span>
+            <div>
+                <label><input type="checkbox" name="frontend" value="1"{% if form.frontend|default('0') == '1' %} checked{% endif %}> {{ t('FRONTEND_ON') }}</label>
+                <p class="lst-help">{{ t('HELP_FRONTEND') }}</p>
+            </div>
+        </div>
+        <div class="lst-row">
+            <span class="lst-label">{{ t('APPROVAL') }}</span>
+            <div>
+                <label><input type="checkbox" name="approval" value="1"{% if form.approval|default('0') == '1' %} checked{% endif %}> {{ t('APPROVAL_ON') }}</label><br>
+                <label><input type="checkbox" name="recheck" value="1"{% if form.recheck|default('0') == '1' %} checked{% endif %}> {{ t('RECHECK_ON') }}</label>
+            </div>
+        </div>
+        <div class="lst-row">
+            <label for="lst_notify">{{ t('NOTIFY_EMAIL') }}</label>
+            <div>
+                <input type="email" id="lst_notify" name="notify_email" maxlength="255" value="{{ form.notify_email|default('') }}">
+                <p class="lst-help">{{ t('HELP_NOTIFY_EMAIL') }}</p>
+            </div>
+        </div>
+        <div class="lst-row">
+            <span class="lst-label">{{ t('SPAM') }}</span>
+            <div>
+                <label><input type="checkbox" name="captcha" value="1"{% if form.captcha|default('0') == '1' %} checked{% endif %}{% if not captcha_available %} disabled{% endif %}> {{ t('CAPTCHA_ON') }}</label>
+                <p class="lst-help">{{ t(captcha_available ? 'HELP_CAPTCHA' : 'HELP_NO_CAPTCHA') }}</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <div class="lst-buttons">
+        <button type="submit">{{ L_('TEXT:SAVE') }}</button>
+    </div>
+</form>
+{% endblock %}

@@ -1,7 +1,7 @@
 <?php
 /**
- * Listings – field types: validation, display value and form input.
- * One place per type, so the backend form, the later frontend form and the
+ * Listings – field types: validation and display value (the inputs are twig/_field.twig).
+ * One place per type, so the forms in backend and frontend and the
  * layouts treat a value the same way.
  * @module listings  @author Bianka Martinovic
  * @license GNU General Public License   @platform WBCE 1.7.0+
@@ -181,70 +181,5 @@ final class FieldTypes
             }
         }
         return $value;
-    }
-
-    /**
-     * Form control for a field, named fields[<name>].
-     */
-    public static function input(array $field, mixed $value): string
-    {
-        $type = $field['type'];
-        $name = 'fields[' . $field['name'] . ']';
-        $id = 'lst_f_' . $field['name'];
-        $req = $field['required'] ? ' required' : '';
-        $attr = ' name="' . h($name) . '" id="' . h($id) . '"' . $req;
-
-        switch ($type) {
-            case 'heading':
-                return '<h3 class="lst-form-heading">' . h($field['label']) . '</h3>';
-
-            case 'textarea':
-                return '<textarea' . $attr . ' rows="6" maxlength="' . self::maxLength($field) . '">'
-                    . h(is_scalar($value) ? (string) $value : '') . '</textarea>';
-
-            case 'number':
-                $min = ($field['options']['min'] ?? '') !== '' ? ' min="' . h($field['options']['min']) . '"' : '';
-                $max = ($field['options']['max'] ?? '') !== '' ? ' max="' . h($field['options']['max']) . '"' : '';
-                return '<input type="number" step="any"' . $attr . $min . $max . ' value="' . h(is_scalar($value) ? (string) $value : '') . '">';
-
-            case 'date':
-                return '<input type="date"' . $attr . ' value="' . h(is_string($value) ? $value : '') . '">';
-
-            case 'datetime':
-                $local = is_string($value) && strlen($value) >= 16 ? str_replace(' ', 'T', substr($value, 0, 16)) : '';
-                return '<input type="datetime-local"' . $attr . ' value="' . h($local) . '">';
-
-            case 'select':
-                $html = '<select' . $attr . '><option value="">–</option>';
-                foreach ($field['options']['choices'] ?? [] as $choice) {
-                    $sel = (string) $value === $choice['value'] ? ' selected' : '';
-                    $html .= '<option value="' . h($choice['value']) . '"' . $sel . '>' . h($choice['label']) . '</option>';
-                }
-                return $html . '</select>';
-
-            case 'radio':
-            case 'checkboxes':
-                $multi = $type === 'checkboxes';
-                $inputType = $multi ? 'checkbox' : 'radio';
-                $inputName = $multi ? $name . '[]' : $name;
-                $current = $multi ? array_map('strval', (array) $value) : [(string) $value];
-                $html = '<span class="lst-choices" id="' . h($id) . '">';
-                foreach ($field['options']['choices'] ?? [] as $i => $choice) {
-                    $checked = in_array($choice['value'], $current, true) ? ' checked' : '';
-                    // a required checkbox group cannot be expressed in HTML; the server checks it
-                    $required = !$multi && $field['required'] && $i === 0 ? ' required' : '';
-                    $html .= '<label><input type="' . $inputType . '" name="' . h($inputName) . '" value="' . h($choice['value']) . '"'
-                        . $checked . $required . '> ' . h($choice['label']) . '</label> ';
-                }
-                return $html . '</span>';
-
-            case 'boolean':
-                return '<input type="hidden" name="' . h($name) . '" value="0">'
-                    . '<input type="checkbox"' . $attr . ' value="1"' . ($value ? ' checked' : '') . '>';
-        }
-
-        $inputType = ['email' => 'email', 'url' => 'url', 'phone' => 'tel'][$type] ?? 'text';
-        $maxlength = $type === 'text' ? ' maxlength="' . self::maxLength($field) . '"' : '';
-        return '<input type="' . $inputType . '"' . $attr . $maxlength . ' value="' . h(is_scalar($value) ? (string) $value : '') . '">';
     }
 }

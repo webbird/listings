@@ -1,0 +1,26 @@
+{#
+    listings/twig/view_link.twig – an owner asks for edit links
+#}
+<div class="mod_listings lst-owner" id="lst-{{ section_id }}">
+    <h2>{{ t('REQUEST_LINK') }}</h2>
+    {% include '_messages.twig' %}
+    <p class="lst-intro">{{ t('INTRO_REQUEST_LINK') }}</p>
+    <form method="post" action="{{ action }}" class="lst-owner-form">
+        <input type="hidden" name="section_id" value="{{ section_id }}">
+        {{ FTAN|raw }}
+        <input type="hidden" name="lst_action" value="request">
+        <div class="lst-row">
+            <label for="lst_email_{{ section_id }}">{{ t('OWNER_EMAIL') }} *</label>
+            <input type="email" id="lst_email_{{ section_id }}" name="owner_email" maxlength="255" required autocomplete="email" value="{{ values.owner_email|default('') }}">
+        </div>
+        <div class="lst-hp" aria-hidden="true">
+            <label for="lst_hp_{{ section_id }}">Website</label>
+            <input type="text" id="lst_hp_{{ section_id }}" name="lst_hp" value="" tabindex="-1" autocomplete="off">
+        </div>
+        {% if captcha %}<div class="lst-captcha">{{ captcha|raw }}</div>{% endif %}
+        <div class="lst-buttons">
+            <button type="submit">{{ t('SEND_LINK') }}</button>
+            <a href="{{ list_url }}">{{ t('BACK_TO_LIST') }}</a>
+        </div>
+    </form>
+</div>

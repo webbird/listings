@@ -1,0 +1,69 @@
+{#
+    listings/twig/modify_fields.twig – the field set of the directory in the order of the form
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<div class="lst-toolbar">
+    <a class="lst-button" href="{{ url({lst_view: 'field'}) }}">{{ t('NEW_FIELD') }}</a>
+</div>
+<p class="lst-hint">{{ t('HINT_FIELDS') }}</p>
+
+{% if fields is empty %}
+    <p>{{ t('NO_FIELDS') }}</p>
+{% else %}
+<table class="lst-table">
+    <thead>
+        <tr>
+            <th></th>
+            <th>{{ t('FIELD_LABEL') }}</th>
+            <th>{{ t('FIELD_NAME') }}</th>
+            <th>{{ t('FIELD_TYPE') }}</th>
+            <th>{{ t('FIELD_REQUIRED') }}</th>
+            <th>{{ t('FIELD_VISIBILITY') }}</th>
+            <th>{{ t('FIELD_IN_LIST') }}</th>
+            <th>{{ t('FIELD_EDITABLE_SHORT') }}</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for f in fields %}
+        {% set key = idkey('field', f.field_id) %}
+        {% set edit = url({lst_view: 'field', lst_field: f.field_id}) %}
+        {# the inner loop below has a loop variable of its own #}
+        {% set moves = {'-1': ['UP', '▲', not loop.first], '1': ['DOWN', '▼', not loop.last]} %}
+        <tr{% if f.type == 'heading' %} class="lst-heading-row"{% endif %}>
+            <td class="lst-move">
+                {% for dir, move in moves %}
+                    {% if move[2] %}
+                    <form method="post" action="{{ action }}">
+                        {% include '_hidden.twig' %}
+                        <input type="hidden" name="lst_action" value="field_move">
+                        <input type="hidden" name="lst_dir" value="{{ dir }}">
+                        <input type="hidden" name="lst_field" value="{{ key }}">
+                        <button type="submit" class="lst-link-button" title="{{ t('MOVE_' ~ move[0]) }}">{{ move[1] }}</button>
+                    </form>
+                    {% endif %}
+                {% endfor %}
+            </td>
+            <td><a href="{{ edit }}">{{ f.label }}</a></td>
+            <td><code>{{ f.name }}</code></td>
+            <td>{{ t('TYPE_' ~ f.type|upper) }}</td>
+            <td>{{ f.required ? '✓' }}</td>
+            <td>{{ t('VISIBILITY_' ~ f.visibility|upper) }}</td>
+            <td>{{ f.in_list ? '✓' }}</td>
+            <td>{{ f.editable ? '✓' }}</td>
+            <td class="lst-actions">
+                <a href="{{ edit }}">{{ L_('TEXT:MODIFY') }}</a>
+                <form method="post" action="{{ action }}" data-lst-confirm="{{ t('CONFIRM_DELETE_FIELD', f.label) }}">
+                    {% include '_hidden.twig' %}
+                    <input type="hidden" name="lst_action" value="field_delete">
+                    <input type="hidden" name="lst_field" value="{{ key }}">
+                    <button type="submit" class="lst-link-button">{{ L_('TEXT:DELETE') }}</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

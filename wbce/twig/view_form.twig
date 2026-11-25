@@ -1,0 +1,71 @@
+{#
+    listings/twig/view_form.twig – an owner adds (mode new) or edits (mode edit) an entry
+#}
+{% set is_new = mode == 'new' %}
+<div class="mod_listings lst-owner" id="lst-{{ section_id }}">
+    <h2>{{ is_new ? t('NEW_ENTRY') : t('EDIT_ITEM', item.title) }}</h2>
+    {% include '_messages.twig' %}
+    <p class="lst-intro">{{ is_new ? t(approval ? 'INTRO_NEW_APPROVAL' : 'INTRO_NEW') : t('INTRO_STATUS_' ~ item.status|upper) }}</p>
+
+    <form method="post" action="{{ action }}" class="lst-owner-form">
+        <input type="hidden" name="section_id" value="{{ section_id }}">
+        {{ FTAN|raw }}
+        <input type="hidden" name="lst_action" value="{{ is_new ? 'create' : 'update' }}">
+        {% if not is_new %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+
+        <div class="lst-row">
+            <label for="lst_title_{{ section_id }}">{{ t('TITLE') }} *</label>
+            <input type="text" id="lst_title_{{ section_id }}" name="title" maxlength="255" required value="{{ values.title|default('') }}">
+        </div>
+
+        {% if is_new %}
+        <div class="lst-row">
+            <label for="lst_email_{{ section_id }}">{{ t('OWNER_EMAIL') }} *</label>
+            <input type="email" id="lst_email_{{ section_id }}" name="owner_email" maxlength="255" required autocomplete="email" value="{{ values.owner_email|default('') }}">
+            <p class="lst-help">{{ t('HELP_OWNER_EMAIL') }}</p>
+        </div>
+        {% endif %}
+
+        {% for f in fields %}
+            {% if f.type == 'heading' %}
+                {% include '_field.twig' with {f: f, v: null} only %}
+            {% else %}
+            <div class="lst-row">
+                <label for="lst_f_{{ f.name }}">
+                    {{ f.label }}{{ f.required ? ' *' }}
+                    {% if f.visibility == 'owner' %}<span class="lst-badge">{{ t('NOT_PUBLIC') }}</span>{% endif %}
+                </label>
+                {% include '_field.twig' with {f: f, v: values.fields[f.name]|default(null)} only %}
+                {% if f.help != '' %}<p class="lst-help">{{ f.help }}</p>{% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+
+        {% if is_new %}
+            {# the honeypot: out of sight for people, still filled in by bots #}
+            <div class="lst-hp" aria-hidden="true">
+                <label for="lst_hp_{{ section_id }}">Website</label>
+                <input type="text" id="lst_hp_{{ section_id }}" name="lst_hp" value="" tabindex="-1" autocomplete="off">
+            </div>
+            <div class="lst-row lst-privacy">
+                <label><input type="checkbox" name="privacy" value="1" required{% if values.privacy|default('') == '1' %} checked{% endif %}> {{ t('PRIVACY_CONSENT') }}</label>
+            </div>
+            {% if captcha %}<div class="lst-captcha">{{ captcha|raw }}</div>{% endif %}
+        {% endif %}
+
+        <div class="lst-buttons">
+            <button type="submit">{{ is_new ? t('SUBMIT_NEW') : L_('TEXT:SAVE') }}</button>
+            <a href="{{ list_url }}">{{ t('BACK_TO_LIST') }}</a>
+        </div>
+    </form>
+
+    {% if not is_new %}
+    <form method="post" action="{{ action }}" class="lst-delete" data-lst-confirm="{{ t('CONFIRM_DELETE_ITEM', item.title) }}">
+        <input type="hidden" name="section_id" value="{{ section_id }}">
+        {{ FTAN|raw }}
+        <input type="hidden" name="lst_action" value="delete">
+        <input type="hidden" name="token" value="{{ token }}">
+        <button type="submit">{{ t('DELETE_ENTRY') }}</button>
+    </form>
+    {% endif %}
+</div>

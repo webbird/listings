@@ -31,6 +31,32 @@ final class Module
         return ADMIN_URL . '/pages/modify.php?' . http_build_query($query, '', '&') . '#' . $anchor;
     }
 
+    /** A string of MOD_LISTINGS, placeholders filled. */
+    public static function t(string $key, string|int|float ...$args): string
+    {
+        $text = \Lang::get('MOD_LISTINGS', $key, $key);
+        return $args === [] ? $text : vsprintf($text, $args);
+    }
+
+    /**
+     * Twig for the templates in twig/. WBCE's getTwig() turns autoescaping
+     * off; here every value is escaped unless a template says |raw.
+     *
+     * @param array<string, callable> $functions extra functions for this request
+     */
+    public static function twig(array $functions = []): \Twig\Environment
+    {
+        $twig = getTwig(dirname(__DIR__) . '/twig/');
+        $twig->getExtension(\Twig\Extension\EscaperExtension::class)->setDefaultStrategy('html');
+        $twig->addFunction(new \Twig\TwigFunction('t', self::t(...)));
+        $twig->addFunction(new \Twig\TwigFunction('format_time', self::formatTime(...)));
+        $twig->addFunction(new \Twig\TwigFunction('maxlength', FieldTypes::maxLength(...)));
+        foreach ($functions as $name => $function) {
+            $twig->addFunction(new \Twig\TwigFunction($name, $function));
+        }
+        return $twig;
+    }
+
     public static function saveUrl(): string
     {
         return WB_URL . '/modules/' . self::DIR . '/save.php';

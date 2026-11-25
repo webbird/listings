@@ -1,0 +1,29 @@
+{#
+    listings/twig/modify_layouts.twig – the list and detail layouts (LayoutParser, editable by the admin)
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<p class="lst-hint">{{ t('HINT_LAYOUTS') }}</p>
+{% if field_keys is not empty %}
+    <p class="lst-help">{{ t('LAYOUT_FIELD_KEYS') }} {% for key in field_keys %}<code>[ITEM.{{ key }}]</code> {% endfor %}</p>
+{% endif %}
+<form method="post" action="{{ action }}" class="lst-form">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="layouts_save">
+    {% for name, layout in layouts %}
+    <fieldset>
+        <legend>
+            {{ t('LAYOUT_' ~ name|upper) }}
+            <span class="lst-badge">{{ t(custom[name] ? 'LAYOUT_CUSTOM' : 'LAYOUT_DEFAULT') }}</span>
+        </legend>
+        <textarea name="layout_{{ name }}" rows="18" class="lst-code" spellcheck="false">{{ layout }}</textarea>
+        {% if custom[name] %}
+            <label><input type="checkbox" name="reset_{{ name }}" value="1"> {{ t('LAYOUT_RESET') }}</label>
+        {% endif %}
+    </fieldset>
+    {% endfor %}
+    <div class="lst-buttons">
+        <button type="submit">{{ L_('TEXT:SAVE') }}</button>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,13 @@
+{#
+    listings/twig/view_message.twig – a message above the list, or instead of a form
+#}
+{% set is_error = type == 'error' %}
+<div class="mod_listings">
+    <div class="lst-message {{ is_error ? 'lst-error' : 'lst-success' }}" role="{{ is_error ? 'alert' : 'status' }}">
+        <p>{{ text }}</p>
+        {% if link_url is defined and link_url %}
+            <p><a href="{{ link_url }}">{{ t('REQUEST_LINK') }}</a>
+            {% if list_url is defined and list_url %} · <a href="{{ list_url }}">{{ t('BACK_TO_LIST') }}</a>{% endif %}</p>
+        {% endif %}
+    </div>
+</div>

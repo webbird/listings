@@ -1,0 +1,47 @@
+{#
+    listings/twig/_field.twig – the input of one field (f) with its value (v),
+    named fields[<name>]; used by the backend and the owner's form alike
+#}
+{% set name = 'fields[' ~ f.name ~ ']' %}
+{% set id = 'lst_f_' ~ f.name %}
+{% set text = v is iterable ? '' : v %}
+{% set choices = f.options.choices|default([]) %}
+{% if f.type == 'heading' %}
+    <h3 class="lst-form-heading">{{ f.label }}</h3>
+{% elseif f.type == 'textarea' %}
+    <textarea name="{{ name }}" id="{{ id }}" rows="6" maxlength="{{ maxlength(f) }}"{% if f.required %} required{% endif %}>{{ text }}</textarea>
+{% elseif f.type == 'number' %}
+    <input type="number" step="any" name="{{ name }}" id="{{ id }}" value="{{ text }}"
+        {%- if f.options.min|default('') != '' %} min="{{ f.options.min }}"{% endif %}
+        {%- if f.options.max|default('') != '' %} max="{{ f.options.max }}"{% endif %}
+        {%- if f.required %} required{% endif %}>
+{% elseif f.type == 'date' %}
+    <input type="date" name="{{ name }}" id="{{ id }}" value="{{ text }}"{% if f.required %} required{% endif %}>
+{% elseif f.type == 'datetime' %}
+    {# stored as 2026-11-25 14:30:00, datetime-local wants 2026-11-25T14:30 #}
+    <input type="datetime-local" name="{{ name }}" id="{{ id }}" value="{{ text|length >= 16 ? text|slice(0, 16)|replace({' ': 'T'}) : '' }}"{% if f.required %} required{% endif %}>
+{% elseif f.type == 'select' %}
+    <select name="{{ name }}" id="{{ id }}"{% if f.required %} required{% endif %}>
+        <option value="">–</option>
+        {% for c in choices %}<option value="{{ c.value }}"{% if text ~ '' == c.value %} selected{% endif %}>{{ c.label }}</option>{% endfor %}
+    </select>
+{% elseif f.type == 'radio' or f.type == 'checkboxes' %}
+    {% set multi = f.type == 'checkboxes' %}
+    {% set current = multi ? (v is iterable ? v : []) : [text ~ ''] %}
+    <span class="lst-choices" id="{{ id }}">
+        {% for c in choices %}
+            {# a required checkbox group cannot be expressed in HTML; the server checks it #}
+            <label><input type="{{ multi ? 'checkbox' : 'radio' }}" name="{{ multi ? name ~ '[]' : name }}" value="{{ c.value }}"
+                {%- if c.value in current %} checked{% endif %}
+                {%- if not multi and f.required and loop.first %} required{% endif %}> {{ c.label }}</label>
+        {% endfor %}
+    </span>
+{% elseif f.type == 'boolean' %}
+    <input type="hidden" name="{{ name }}" value="0">
+    <input type="checkbox" name="{{ name }}" id="{{ id }}" value="1"{% if v and v != '0' %} checked{% endif %}{% if f.required %} required{% endif %}>
+{% else %}
+    {% set input = {email: 'email', url: 'url', phone: 'tel'}[f.type]|default('text') %}
+    <input type="{{ input }}" name="{{ name }}" id="{{ id }}" value="{{ text }}"
+        {%- if f.type == 'text' %} maxlength="{{ maxlength(f) }}"{% endif %}
+        {%- if f.required %} required{% endif %}>
+{% endif %}

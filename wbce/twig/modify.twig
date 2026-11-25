@@ -1,0 +1,13 @@
+{#
+    listings/twig/modify.twig – frame of the backend views: tabs, messages, content
+#}
+{% set tabs = {items: ['TAB_ITEMS', ['item']], fields: ['TAB_FIELDS', ['field']], layouts: ['TAB_LAYOUTS', []], settings: ['TAB_SETTINGS', []]} %}
+<div class="mod_listings lst-backend">
+    <nav class="lst-tabs">
+        {% for tab, def in tabs %}
+            <a href="{{ url({lst_view: tab}) }}"{% if view == tab or view in def[1] %} class="active"{% endif %}>{{ t(def[0]) }}</a>
+        {% endfor %}
+    </nav>
+    {% include '_messages.twig' %}
+    {% block content %}{% endblock %}
+</div>

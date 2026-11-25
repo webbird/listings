@@ -39,3 +39,6 @@
 .lst-backend .lst-actions .lst-button { padding: .15em .6em; margin-right: .25em; cursor: pointer; background: #fff; font: inherit; }
 .lst-backend .lst-actions .lst-approve { border-color: #3a8a4a; color: #2c6b38; }
 .lst-backend .lst-actions .lst-reject { border-color: #b33; color: #a22; }
+.lst-backend .lst-message { margin: 0 0 1em; padding: .6em .9em; border-left: 3px solid #3a8a4a; background: #eef7ef; }
+.lst-backend .lst-message.lst-error { border-left-color: #b33; background: #fbeeee; }
+.lst-backend .lst-message ul { margin: 0; padding-left: 1.2em; }

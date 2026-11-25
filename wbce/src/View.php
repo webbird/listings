@@ -63,7 +63,6 @@ final class View
             'link_url'   => self::formUrl($baseUrl, $sectionId, 'link'),
             'errors'     => $errors,
             'success'    => (string) ($flash['success'] ?? ''),
-            'hidden'     => '<input type="hidden" name="section_id" value="' . $sectionId . '">' . self::ftan(),
         ];
 
         // links from mails: they name their section through the token
@@ -248,12 +247,6 @@ final class View
         ) !== '';
     }
 
-    private static function ftan(): string
-    {
-        $wb = $GLOBALS['wb'] ?? null;
-        return $wb instanceof \SecureForm ? $wb->getFTAN() : '';
-    }
-
     /** The captcha of captcha_control (ALTCHA; without HTTPS a small sum). */
     private static function captcha(int $sectionId): string
     {
@@ -266,14 +259,12 @@ final class View
     }
 
     /**
-     * Renders frontend/<name>.php with $v as its only variable.
+     * Renders twig/view_<name>.twig.
      *
-     * @param array<string, mixed> $v
+     * @param array<string, mixed> $vars
      */
-    private static function template(string $name, array $v): string
+    private static function template(string $name, array $vars): string
     {
-        ob_start();
-        include dirname(__DIR__) . '/frontend/' . $name . '.php';
-        return (string) ob_get_clean();
+        return Module::twig()->render('view_' . $name . '.twig', $vars);
     }
 }

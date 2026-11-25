@@ -1,0 +1,85 @@
+{#
+    listings/twig/modify_field.twig – add or edit a field; backend_body.js shows the options of the chosen type
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+{# the types that store a value; a heading has no options #}
+{% set storing = 'text textarea number email url phone date datetime select radio checkboxes boolean' %}
+<h3>{{ field is null ? t('NEW_FIELD') : t('EDIT_FIELD', field.label) }}</h3>
+<form method="post" action="{{ action }}" class="lst-form lst-field-form">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="field_save">
+    {% if field is not null %}<input type="hidden" name="lst_field" value="{{ idkey('field', field.field_id) }}">{% endif %}
+
+    <div class="lst-row">
+        <label for="lst_label">{{ t('FIELD_LABEL') }} *</label>
+        <div><input type="text" id="lst_label" name="label" maxlength="255" required value="{{ form.label }}"></div>
+    </div>
+    <div class="lst-row">
+        <label for="lst_name">{{ t('FIELD_NAME') }}</label>
+        <div>
+            {% if name_locked %}
+                <code>{{ field.name }}</code>
+                <p class="lst-help">{{ t('HELP_NAME_LOCKED') }}</p>
+            {% else %}
+                <input type="text" id="lst_name" name="name" maxlength="40" pattern="[a-z][a-z0-9_]*" value="{{ form.name }}">
+                <p class="lst-help">{{ t('HELP_NAME') }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="lst-row">
+        <label for="lst_type">{{ t('FIELD_TYPE') }}</label>
+        <div>
+            <select id="lst_type" name="type" data-lst-type>
+                {% for type in types %}<option value="{{ type }}"{% if form.type == type %} selected{% endif %}>{{ t('TYPE_' ~ type|upper) }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="lst-row" data-lst-for="select radio checkboxes">
+        <label for="lst_choices">{{ t('FIELD_CHOICES') }}</label>
+        <div>
+            <textarea id="lst_choices" name="choices" rows="6">{{ form.choices }}</textarea>
+            <p class="lst-help">{{ t('HELP_CHOICES') }}</p>
+        </div>
+    </div>
+    <div class="lst-row" data-lst-for="text textarea">
+        <label for="lst_maxlength">{{ t('FIELD_MAXLENGTH') }}</label>
+        <div><input type="number" id="lst_maxlength" name="maxlength" min="1" max="65535" value="{{ form.maxlength }}"></div>
+    </div>
+    <div class="lst-row" data-lst-for="number">
+        <label for="lst_min">{{ t('FIELD_RANGE') }}</label>
+        <div>
+            <input type="text" id="lst_min" name="min" size="8" value="{{ form.min }}" placeholder="min"> –
+            <input type="text" name="max" size="8" value="{{ form.max }}" placeholder="max" aria-label="max">
+        </div>
+    </div>
+
+    <div class="lst-row">
+        <label for="lst_help">{{ t('FIELD_HELP') }}</label>
+        <div><input type="text" id="lst_help" name="help" maxlength="255" value="{{ form.help }}"></div>
+    </div>
+    <div class="lst-row" data-lst-for="{{ storing }}">
+        <span class="lst-label">{{ t('FIELD_OPTIONS') }}</span>
+        <div>
+            <label><input type="checkbox" name="required" value="1"{% if form.required == '1' %} checked{% endif %}> {{ t('FIELD_REQUIRED') }}</label><br>
+            <label><input type="checkbox" name="in_list" value="1"{% if form.in_list == '1' %} checked{% endif %}> {{ t('FIELD_IN_LIST') }}</label><br>
+            <label><input type="checkbox" name="editable" value="1"{% if form.editable == '1' %} checked{% endif %}> {{ t('FIELD_EDITABLE') }}</label>
+            <p class="lst-help">{{ t('HELP_EDITABLE') }}</p>
+        </div>
+    </div>
+    <div class="lst-row" data-lst-for="{{ storing }}">
+        <label for="lst_visibility">{{ t('FIELD_VISIBILITY') }}</label>
+        <div>
+            <select id="lst_visibility" name="visibility">
+                {% for vis in visibilities %}<option value="{{ vis }}"{% if form.visibility == vis %} selected{% endif %}>{{ t('VISIBILITY_' ~ vis|upper) }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="lst-buttons">
+        <button type="submit">{{ L_('TEXT:SAVE') }}</button>
+        <a href="{{ url({lst_view: 'fields'}) }}">{{ L_('TEXT:CANCEL') }}</a>
+    </div>
+</form>
+{% endblock %}

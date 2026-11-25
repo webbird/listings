@@ -1,0 +1,8 @@
+{# listings/twig/_messages.twig – errors of the last request, or its success #}
+{% if errors is defined and errors %}
+    <div class="lst-message lst-error" role="alert">
+        <ul>{% for message in errors %}<li>{{ message }}</li>{% endfor %}</ul>
+    </div>
+{% elseif success is defined and success %}
+    <p class="lst-message lst-success" role="status">{{ success }}</p>
+{% endif %}
