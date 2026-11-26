@@ -14,6 +14,7 @@ require WB_PATH . '/modules/admin.php';
 require_once __DIR__ . '/bootstrap.php';
 
 use Listings\Fields;
+use Listings\Import;
 use Listings\Items;
 use Listings\Layouts;
 use Listings\Mail;
@@ -252,6 +253,25 @@ switch ($post('lst_action')) {
             $fail([$dbError], ['lst_view' => 'categories']);
         }
         $done(L_('MOD_LISTINGS:DELETED_CATEGORY', h($cat['name'])), ['lst_view' => 'categories']);
+
+    case 'import_run':
+        $source = Module::checkId($admin, 'lst_source', 'import');
+        if ($source === 0) {
+            $fail([L_('MOD_LISTINGS:ERR_EXPIRED_FORM')], ['lst_view' => 'import']);
+        }
+        $report = Import::run(
+            $source,
+            $sectionId,
+            $pageId,
+            ['fix_encoding' => $post('lst_fix') === '1', 'public_email' => $post('lst_email') === '1'],
+            (int) $admin->get_user_id()
+        );
+        if ($report['errors'] !== []) {
+            $fail($report['errors'], ['lst_view' => 'import', 'lst_source' => $source]);
+        }
+        // the report is shown once on the import page; without its closures it fits the session
+        Module::flash($sectionId, ['report' => $report]);
+        $done(L_('MOD_LISTINGS:IMPORT_DONE', $report['counts']['items']), ['lst_view' => 'import']);
 
     case 'tag_rename':
     case 'tag_delete':

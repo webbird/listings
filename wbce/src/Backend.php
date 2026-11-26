@@ -12,7 +12,7 @@ defined('WB_PATH') or die('This file cannot be accessed directly!');
 
 final class Backend
 {
-    public const VIEWS = ['items', 'item', 'fields', 'field', 'categories', 'category', 'layouts', 'settings'];
+    public const VIEWS = ['items', 'item', 'fields', 'field', 'categories', 'category', 'layouts', 'settings', 'import'];
 
     public const ITEMS_PER_PAGE = 50;
 
@@ -166,6 +166,24 @@ final class Backend
                 $vars['runtime_max'] = Settings::RUNTIME_MAX;
                 $vars['tag_modes'] = Taxonomy::TAG_MODES;
                 $vars['rss_url'] = WB_URL . '/modules/' . Module::DIR . '/rss.php?section_id=' . $sectionId;
+                $vars['import_available'] = Import::available();
+                break;
+
+            case 'import':
+                // the dry run is a GET view: it only reads
+                $source = (int) $param('lst_source');
+                $options = [
+                    'fix_encoding' => $param('lst_source') === '' || $param('lst_fix') === '1',
+                    'public_email' => $param('lst_source') === '' || $param('lst_email') === '1',
+                ];
+                $vars['sources'] = Import::sources();
+                $vars['source'] = $source;
+                $vars['options'] = $options;
+                $vars['target_empty'] = Import::targetEmpty($sectionId);
+                $vars['modify_action'] = ADMIN_URL . '/pages/modify.php';
+                $vars['report'] = $source > 0 && in_array($source, array_column($vars['sources'], 'section_id'), true)
+                    ? Import::plan($source, $options) : null;
+                $vars['result'] = is_array($flash['report'] ?? null) ? $flash['report'] : null;
                 break;
         }
 

@@ -1,0 +1,54 @@
+{# listings/twig/_import_report.twig – what an import creates (dry run) or created; report from Listings\Import #}
+{% if report.errors is not empty %}
+    <div class="lst-message lst-error" role="alert"><ul>{% for e in report.errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+{% endif %}
+<table class="lst-table lst-import-counts">
+    <tbody>
+        <tr><th scope="row">{{ t('TAB_ITEMS') }}</th><td>{{ report.counts.items }}</td>
+            <td>{% if report.counts.pending > 0 %}{{ t('IMPORT_PENDING', report.counts.pending) }}{% endif %}
+                {% if report.counts.expired > 0 %}{{ t('IMPORT_EXPIRED', report.counts.expired) }}{% endif %}</td></tr>
+        <tr><th scope="row">{{ t('TAB_FIELDS') }}</th><td>{{ report.fields|length }}</td>
+            <td>{{ t(report.form_source == 'forms' ? 'IMPORT_FROM_FORMS' : 'IMPORT_FROM_DATA') }}</td></tr>
+        <tr><th scope="row">{{ t('CATEGORIES') }}</th><td>{{ report.counts.categories }}</td><td></td></tr>
+        <tr><th scope="row">{{ t('TAGS') }}</th><td>{{ report.counts.tags }}</td><td></td></tr>
+    </tbody>
+</table>
+
+{% if report.fields is not empty %}
+<h4>{{ t('TAB_FIELDS') }}</h4>
+<table class="lst-table">
+    <thead>
+        <tr>
+            <th scope="col">{{ t('FIELD_LABEL') }}</th>
+            <th scope="col">{{ t('FIELD_NAME') }}</th>
+            <th scope="col">{{ t('FIELD_TYPE') }}</th>
+            <th scope="col">{{ t('IMPORT_VALUES') }}</th>
+            <th scope="col">{{ t('IMPORT_SOURCE') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for f in report.fields %}
+        <tr{% if f.type == 'heading' %} class="lst-heading-row"{% endif %}>
+            <th scope="row">{{ f.label }}</th>
+            <td><code>{{ f.name }}</code></td>
+            <td>{{ t('TYPE_' ~ f.type|upper) }}</td>
+            <td>{{ f.type == 'heading' ? '' : f.values }}</td>
+            <td>{% if f.source %}<code>{{ f.source }}</code>{% endif %}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% set notes = report.notes %}
+{% if report.counts.repaired > 0 %}{% set notes = notes|merge([t('IMPORT_REPAIRED', report.counts.repaired)]) %}{% endif %}
+{% if report.counts.broken > 0 %}{% set notes = notes|merge([t('IMPORT_BROKEN', report.counts.broken)]) %}{% endif %}
+{% if report.counts.html > 0 %}{% set notes = notes|merge([t('IMPORT_HTML', report.counts.html)]) %}{% endif %}
+{% if notes is not empty %}
+<h4>{{ t('IMPORT_NOTES') }}</h4>
+<ul>{% for n in notes %}<li>{{ n }}</li>{% endfor %}</ul>
+{% endif %}
+{% if report.skipped is not empty %}
+<h4>{{ t('IMPORT_SKIPPED') }}</h4>
+<ul>{% for s in report.skipped %}<li>{{ s }}</li>{% endfor %}</ul>
+{% endif %}

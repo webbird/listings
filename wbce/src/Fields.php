@@ -288,6 +288,12 @@ final class Fields
         return FieldTypes::isChoice($type) && $visibility === 'public';
     }
 
+    /** @return list<string> names a field may not have */
+    public static function reservedNames(): array
+    {
+        return self::RESERVED;
+    }
+
     /**
      * The fields of the owner's form: what the owner may see and edit, and
      * the headings between them. Admin fields keep their values on save.

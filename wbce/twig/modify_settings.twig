@@ -120,4 +120,11 @@
         <button type="submit">{{ L_('TEXT:SAVE') }}</button>
     </div>
 </form>
+{% if import_available %}
+<fieldset>
+    <legend>{{ t('IMPORT_TITLE') }}</legend>
+    <p>{{ t('IMPORT_TEASER') }}</p>
+    <p><a class="lst-button" href="{{ url({lst_view: 'import'}) }}">{{ t('IMPORT_OPEN') }}</a></p>
+</fieldset>
+{% endif %}
 {% endblock %}

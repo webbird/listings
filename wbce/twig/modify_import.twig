@@ -1,0 +1,68 @@
+{#
+    listings/twig/modify_import.twig – import of a wbProfiles directory: choose, dry run, import
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<p class="lst-back"><a href="{{ url({lst_view: 'settings'}) }}">← {{ t('TAB_SETTINGS') }}</a></p>
+<h3>{{ t('IMPORT_TITLE') }}</h3>
+
+{% if result is not null %}
+    <p class="lst-message lst-success" role="status">{{ t('IMPORT_DONE', result.counts.items) }}</p>
+    {% include '_import_report.twig' with {report: result} %}
+    <p class="lst-hint">{{ t('IMPORT_AFTER') }}</p>
+{% else %}
+    <p class="lst-hint">{{ t('IMPORT_INTRO') }}</p>
+    {% if not target_empty %}
+        <p class="lst-message lst-error" role="alert">{{ t('ERR_IMPORT_NOT_EMPTY') }}</p>
+    {% endif %}
+    {% if sources is empty %}
+        <p>{{ t('IMPORT_NO_SOURCES') }}</p>
+    {% else %}
+    <form method="get" action="{{ modify_action }}" class="lst-form">
+        <input type="hidden" name="page_id" value="{{ page_id }}">
+        <input type="hidden" name="lst_section" value="{{ section_id }}">
+        <input type="hidden" name="lst_view" value="import">
+        <div class="lst-row">
+            <label for="lst_source">{{ t('IMPORT_SOURCE_SECTION') }}</label>
+            <div>
+                <select id="lst_source" name="lst_source" required>
+                    <option value="">–</option>
+                    {% for s in sources %}
+                        <option value="{{ s.section_id }}"{% if source == s.section_id %} selected{% endif %}>
+                            {{- t('IMPORT_SOURCE_OPTION', s.section_id, s.title != '' ? s.title : t('IMPORT_NO_PAGE'), s.items) -}}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="lst-row">
+            <span class="lst-label">{{ t('FIELD_OPTIONS') }}</span>
+            <div>
+                <label><input type="checkbox" name="lst_fix" value="1"{% if options.fix_encoding %} checked{% endif %}> {{ t('IMPORT_FIX_ENCODING') }}</label><br>
+                <label><input type="checkbox" name="lst_email" value="1"{% if options.public_email %} checked{% endif %}> {{ t('IMPORT_PUBLIC_EMAIL') }}</label>
+            </div>
+        </div>
+        <div class="lst-buttons">
+            <button type="submit" class="lst-button">{{ t('IMPORT_DRY_RUN') }}</button>
+        </div>
+    </form>
+    {% endif %}
+
+    {% if report is not null %}
+        <h3>{{ t('IMPORT_PLAN') }}</h3>
+        {% include '_import_report.twig' %}
+        {% if target_empty and report.errors is empty %}
+        <form method="post" action="{{ action }}" data-lst-confirm="{{ t('CONFIRM_IMPORT', report.counts.items) }}">
+            {% include '_hidden.twig' %}
+            <input type="hidden" name="lst_action" value="import_run">
+            <input type="hidden" name="lst_source" value="{{ idkey('import', source) }}">
+            <input type="hidden" name="lst_fix" value="{{ options.fix_encoding ? '1' : '0' }}">
+            <input type="hidden" name="lst_email" value="{{ options.public_email ? '1' : '0' }}">
+            <div class="lst-buttons">
+                <button type="submit" class="lst-button lst-button--primary">{{ t('IMPORT_RUN') }}</button>
+            </div>
+        </form>
+        {% endif %}
+    {% endif %}
+{% endif %}
+{% endblock %}
