@@ -1,0 +1,71 @@
+{#
+    listings/twig/modify_presets.twig – presets: start an empty directory from one, export this one
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<p class="lst-back"><a href="{{ url({lst_view: 'fields'}) }}">← {{ t('TAB_FIELDS') }}</a></p>
+<h3>{{ t('PRESETS_TITLE') }}</h3>
+<p class="lst-hint">{{ t('PRESETS_INTRO') }}</p>
+
+{% if not target_empty and errors is empty %}
+    <p class="lst-message lst-error" role="status">{{ t('ERR_PRESET_NOT_EMPTY') }}</p>
+{% endif %}
+
+<h4>{{ t('PRESETS_BUILT_IN') }}</h4>
+{% if presets is empty %}
+    <p>{{ t('PRESETS_NONE') }}</p>
+{% else %}
+<table class="lst-table lst-presets">
+    <tbody>
+    {% for p in presets %}
+        <tr>
+            <th scope="row">{{ p.name }}</th>
+            <td>{{ p.description }}<br><span class="lst-help">{{ t('PRESET_COUNTS', p.fields, p.categories) }}</span></td>
+            <td class="lst-actions">
+                {% if target_empty %}
+                <form method="post" action="{{ action }}" data-lst-confirm="{{ t('CONFIRM_PRESET', p.name) }}">
+                    {% include '_hidden.twig' %}
+                    <input type="hidden" name="lst_action" value="preset_apply">
+                    <input type="hidden" name="preset_key" value="{{ p.key }}">
+                    <button type="submit" class="lst-button">{{ t('PRESET_APPLY') }}</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if target_empty %}
+<h4>{{ t('PRESET_UPLOAD') }}</h4>
+<form method="post" action="{{ action }}" enctype="multipart/form-data" class="lst-form">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="preset_apply">
+    <div class="lst-row">
+        <label for="lst_preset_file">{{ t('PRESET_FILE') }}</label>
+        <div>
+            <input type="file" id="lst_preset_file" name="preset_file" accept=".json,application/json" required>
+            <p class="lst-help">{{ t('HELP_PRESET_FILE') }}</p>
+        </div>
+    </div>
+    <div class="lst-buttons"><button type="submit">{{ t('PRESET_APPLY') }}</button></div>
+</form>
+{% endif %}
+
+<h4>{{ t('PRESET_EXPORT') }}</h4>
+<p>{{ t('HELP_PRESET_EXPORT') }}</p>
+{% if fields is empty %}
+    <p class="lst-help">{{ t('PRESET_EXPORT_EMPTY') }}</p>
+{% else %}
+<form method="post" action="{{ action }}" class="lst-form">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="preset_export">
+    <div class="lst-row">
+        <label for="lst_preset_name">{{ t('PRESET_NAME') }}</label>
+        <div><input type="text" id="lst_preset_name" name="preset_name" maxlength="100" value="{{ page_title }}"></div>
+    </div>
+    <div class="lst-buttons"><button type="submit">{{ t('PRESET_DOWNLOAD') }}</button></div>
+</form>
+{% endif %}
+{% endblock %}

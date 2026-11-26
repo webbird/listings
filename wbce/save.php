@@ -20,6 +20,7 @@ use Listings\Items;
 use Listings\Layouts;
 use Listings\Mail;
 use Listings\Module;
+use Listings\Presets;
 use Listings\Settings;
 use Listings\Taxonomy;
 
@@ -182,49 +183,59 @@ switch ($post('lst_action')) {
         $done(L_('MOD_LISTINGS:SAVED_LAYOUTS'), ['lst_view' => 'layouts']);
 
     case 'settings_save':
-        $perPage = $post('per_page');
-        $sort = $post('sort');
-        $errors = [];
-        if (!ctype_digit($perPage) || (int) $perPage < 1 || (int) $perPage > Settings::PER_PAGE_MAX) {
-            $errors[] = L_('MOD_LISTINGS:ERR_PER_PAGE', Settings::PER_PAGE_MAX);
-        }
-        if (!array_key_exists($sort, Settings::SORTS)) {
-            $sort = 'newest';
-        }
-        $notify = strtolower(trim($post('notify_email')));
-        if ($notify !== '' && filter_var($notify, FILTER_VALIDATE_EMAIL) === false) {
-            $errors[] = L_('MOD_LISTINGS:ERR_EMAIL', L_('MOD_LISTINGS:NOTIFY_EMAIL'));
-        }
-        $runtime = trim($post('runtime_days'));
-        $remind = trim($post('remind_days'));
-        if (!ctype_digit($runtime) || (int) $runtime > Settings::RUNTIME_MAX) {
-            $errors[] = L_('MOD_LISTINGS:ERR_RUNTIME', Settings::RUNTIME_MAX);
-        }
-        if (!ctype_digit($remind) || (int) $remind > 365) {
-            $errors[] = L_('MOD_LISTINGS:ERR_REMIND');
-        }
-        $values = [
-            'per_page'     => $perPage,
-            'sort'         => $sort,
-            'notify_email' => $notify,
-            'owner_mode'   => in_array($post('owner_mode'), Settings::OWNER_MODES, true) ? $post('owner_mode') : 'email',
-            'runtime_days' => $runtime,
-            'remind_days'  => $remind,
-            'tags_mode'    => in_array($post('tags_mode'), Taxonomy::TAG_MODES, true) ? $post('tags_mode') : 'off',
-        ];
-        foreach (['frontend', 'approval', 'recheck', 'captcha', 'contact', 'filter_form', 'rss'] as $flag) {
-            $values[$flag] = $post($flag) === '1' ? '1' : '0';
-        }
+        [$values, $errors] = Settings::check($_POST);
         if ($errors !== []) {
             $fail($errors, ['lst_view' => 'settings'], $values);
         }
-        $values['per_page'] = (string) (int) $perPage;
-        $values['runtime_days'] = (string) (int) $runtime;
-        $values['remind_days'] = (string) (int) $remind;
         if (Settings::save($sectionId, $values) !== null) {
             $fail([$dbError], ['lst_view' => 'settings']);
         }
         $done(L_('MOD_LISTINGS:SAVED_SETTINGS'), ['lst_view' => 'settings']);
+
+    case 'preset_export':
+        // a download, not a redirect: field set, settings, categories, tags, edited layouts — no entries
+        $name = trim(preg_replace('/\s+/u', ' ', $post('preset_name')) ?? '');
+        if ($name === '') {
+            $name = (string) $database->fetchValue('SELECT `page_title` FROM `{TP}pages` WHERE `page_id` = ?', [$pageId]);
+        }
+        $json = json_encode(Presets::export($sectionId, mb_substr($name, 0, 100)), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . Presets::fileName($name) . '"');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: no-store');
+        echo $json;
+        exit;
+
+    case 'preset_apply':
+        $preset = null;
+        $error = null;
+        $key = $post('preset_key');
+        if ($key !== '') {
+            $preset = Presets::find($key);
+            $error = $preset === null ? L_('MOD_LISTINGS:ERR_PRESET_FORMAT') : null;
+        } else {
+            $upload = $_FILES['preset_file'] ?? null;
+            $ok = is_array($upload) && ($upload['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
+                && is_uploaded_file((string) $upload['tmp_name']);
+            if (!$ok) {
+                $error = L_('MOD_LISTINGS:ERR_PRESET_NO_FILE');
+            } elseif ((int) $upload['size'] > Presets::MAX_BYTES) {
+                $error = L_('MOD_LISTINGS:ERR_PRESET_SIZE');
+            } else {
+                [$preset, $error] = Presets::parse((string) file_get_contents((string) $upload['tmp_name']));
+            }
+        }
+        if ($preset === null) {
+            $fail([$error ?? L_('MOD_LISTINGS:ERR_PRESET_FORMAT')], ['lst_view' => 'presets']);
+        }
+        $errors = Presets::apply($sectionId, $preset);
+        if ($errors !== []) {
+            $fail($errors, ['lst_view' => 'presets']);
+        }
+        $done(L_('MOD_LISTINGS:MSG_PRESET_APPLIED', h(Presets::text($preset['name'] ?? ''))), ['lst_view' => 'fields']);
 
     case 'category_save':
         $existing = null;

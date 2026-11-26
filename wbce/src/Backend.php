@@ -12,7 +12,7 @@ defined('WB_PATH') or die('This file cannot be accessed directly!');
 
 final class Backend
 {
-    public const VIEWS = ['items', 'item', 'fields', 'field', 'categories', 'category', 'layouts', 'settings', 'import'];
+    public const VIEWS = ['items', 'item', 'fields', 'field', 'categories', 'category', 'layouts', 'settings', 'import', 'presets'];
 
     public const ITEMS_PER_PAGE = 50;
 
@@ -189,6 +189,12 @@ final class Backend
                 $vars['tag_modes'] = Taxonomy::TAG_MODES;
                 $vars['rss_url'] = WB_URL . '/modules/' . Module::DIR . '/rss.php?section_id=' . $sectionId;
                 $vars['import_available'] = Import::available();
+                break;
+
+            case 'presets':
+                $vars['presets'] = Presets::builtIn();
+                $vars['target_empty'] = Presets::targetEmpty($sectionId);
+                $vars['page_title'] = (string) $GLOBALS['database']->fetchValue('SELECT `page_title` FROM `{TP}pages` WHERE `page_id` = ?', [$pageId]);
                 break;
 
             case 'import':

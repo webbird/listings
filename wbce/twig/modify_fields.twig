@@ -3,6 +3,7 @@
 #}
 {% extends 'modify.twig' %}
 {% block actions %}
+    <a class="lst-button" href="{{ url({lst_view: 'presets'}) }}">{{ t('PRESETS_TITLE') }}</a>
     <a class="lst-button lst-button--primary" href="{{ url({lst_view: 'field'}) }}">{{ t('NEW_FIELD') }}</a>
 {% endblock %}
 {% block content %}
@@ -10,6 +11,7 @@
 
 {% if fields is empty %}
     <p>{{ t('NO_FIELDS') }}</p>
+    <p><a class="lst-button lst-button--primary" href="{{ url({lst_view: 'presets'}) }}">{{ t('PRESET_START') }}</a></p>
 {% else %}
 <table class="lst-table">
     <thead>

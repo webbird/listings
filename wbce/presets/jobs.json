@@ -1,0 +1,69 @@
+{
+    "format": "listings-preset",
+    "version": 1,
+    "name": {"de": "Jobbörse", "en": "Job board"},
+    "description": {
+        "de": "Stellenangebote mit Logo, Einsatzort, Art der Anstellung und Bewerbungsweg. Arbeitgeber geben Stellen selbst ein, der Admin prüft sie. Angebote laufen nach 60 Tagen ab und lassen sich verlängern.",
+        "en": "Job offers with logo, location, type of employment and how to apply. Employers add their offers, the admin checks them. Offers expire after 60 days and can be extended."
+    },
+    "settings": {
+        "per_page": 20,
+        "sort": "published",
+        "frontend": true,
+        "owner_mode": "email",
+        "approval": true,
+        "recheck": true,
+        "captcha": true,
+        "contact": false,
+        "runtime_days": 60,
+        "remind_days": 7,
+        "tags_mode": "fixed",
+        "filter_form": true,
+        "rss": true
+    },
+    "fields": [
+        {"name": "company", "type": "text", "label": {"de": "Unternehmen", "en": "Company"}, "required": true, "in_list": true, "options": {"maxlength": 150}},
+        {"name": "logo", "type": "image", "label": "Logo", "in_list": true, "options": {"max_px": 600, "max_mb": 4}},
+        {"name": "location", "type": "text", "label": {"de": "Einsatzort", "en": "Location"}, "required": true, "in_list": true, "options": {"maxlength": 150}},
+        {"name": "employment", "type": "checkboxes", "label": {"de": "Anstellung", "en": "Employment"}, "required": true, "in_list": true, "filterable": true,
+         "choices": [
+            {"value": "full_time", "label": {"de": "Vollzeit", "en": "Full-time"}},
+            {"value": "part_time", "label": {"de": "Teilzeit", "en": "Part-time"}},
+            {"value": "mini_job", "label": {"de": "Minijob", "en": "Mini job"}},
+            {"value": "apprenticeship", "label": {"de": "Ausbildung", "en": "Apprenticeship"}},
+            {"value": "internship", "label": {"de": "Praktikum", "en": "Internship"}},
+            {"value": "freelance", "label": {"de": "Freie Mitarbeit", "en": "Freelance"}}
+         ]},
+        {"name": "remote", "type": "select", "label": {"de": "Homeoffice", "en": "Remote work"}, "filterable": true,
+         "choices": [
+            {"value": "no", "label": {"de": "Nein", "en": "No"}},
+            {"value": "partly", "label": {"de": "Teilweise", "en": "Partly"}},
+            {"value": "full", "label": {"de": "Vollständig", "en": "Fully remote"}}
+         ]},
+        {"name": "start", "type": "date", "label": {"de": "Beginn", "en": "Start"}},
+        {"name": "salary", "type": "text", "label": {"de": "Vergütung", "en": "Salary"}, "options": {"maxlength": 100}},
+        {"name": "tasks", "type": "textarea", "label": {"de": "Aufgaben", "en": "Tasks"}, "required": true, "options": {"maxlength": 5000}},
+        {"name": "profile", "type": "textarea", "label": {"de": "Profil", "en": "Requirements"}, "options": {"maxlength": 5000}},
+        {"name": "benefits", "type": "textarea", "label": {"de": "Wir bieten", "en": "We offer"}, "options": {"maxlength": 3000}},
+        {"name": "h_apply", "type": "heading", "label": {"de": "Bewerbung", "en": "How to apply"}},
+        {"name": "contact_person", "type": "text", "label": {"de": "Ansprechpartner", "en": "Contact person"}, "options": {"maxlength": 100}},
+        {"name": "apply_email", "type": "email", "label": {"de": "Bewerbung per E-Mail an", "en": "Apply by e-mail to"}},
+        {"name": "apply_url", "type": "url", "label": {"de": "Online bewerben", "en": "Apply online"}},
+        {"name": "documents", "type": "file", "label": {"de": "Stellenbeschreibung (PDF)", "en": "Job description (PDF)"}, "options": {"max_files": 2, "max_mb": 5, "extensions": "pdf"}},
+        {"name": "internal_note", "type": "textarea", "label": {"de": "Interne Notiz", "en": "Internal note"}, "visibility": "admin", "options": {"maxlength": 2000}}
+    ],
+    "categories": [
+        {"name": {"de": "Handwerk", "en": "Crafts and trades"}},
+        {"name": {"de": "Büro und Verwaltung", "en": "Office and administration"}},
+        {"name": "IT"},
+        {"name": {"de": "Gesundheit und Pflege", "en": "Health and care"}},
+        {"name": {"de": "Gastronomie", "en": "Hospitality"}},
+        {"name": {"de": "Handel und Verkauf", "en": "Retail and sales"}},
+        {"name": {"de": "Sonstiges", "en": "Other"}}
+    ],
+    "tags": [
+        {"de": "Berufseinstieg", "en": "Entry level"},
+        {"de": "Quereinstieg", "en": "Career change"},
+        {"de": "Leitung", "en": "Management"}
+    ]
+}

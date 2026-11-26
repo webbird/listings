@@ -106,6 +106,50 @@ final class Settings
         return null;
     }
 
+    /** Switches stored as '1' or '0'. */
+    public const FLAGS = ['frontend', 'approval', 'recheck', 'captcha', 'contact', 'filter_form', 'rss'];
+
+    /**
+     * Checks submitted settings (the form, or a preset on top of the current values).
+     *
+     * @param array<string, mixed> $input
+     * @return array{0: array<string, string>, 1: list<string>} [values for save(), errors]
+     */
+    public static function check(array $input): array
+    {
+        $str = static fn (string $key): string => is_scalar($input[$key] ?? null) ? trim((string) $input[$key]) : '';
+        $errors = [];
+        $perPage = $str('per_page');
+        if (!ctype_digit($perPage) || (int) $perPage < 1 || (int) $perPage > self::PER_PAGE_MAX) {
+            $errors[] = L_('MOD_LISTINGS:ERR_PER_PAGE', self::PER_PAGE_MAX);
+        }
+        $notify = strtolower($str('notify_email'));
+        if ($notify !== '' && filter_var($notify, FILTER_VALIDATE_EMAIL) === false) {
+            $errors[] = L_('MOD_LISTINGS:ERR_EMAIL', L_('MOD_LISTINGS:NOTIFY_EMAIL'));
+        }
+        $runtime = $str('runtime_days');
+        $remind = $str('remind_days');
+        if (!ctype_digit($runtime) || (int) $runtime > self::RUNTIME_MAX) {
+            $errors[] = L_('MOD_LISTINGS:ERR_RUNTIME', self::RUNTIME_MAX);
+        }
+        if (!ctype_digit($remind) || (int) $remind > 365) {
+            $errors[] = L_('MOD_LISTINGS:ERR_REMIND');
+        }
+        $values = [
+            'per_page'     => ctype_digit($perPage) ? (string) (int) $perPage : $perPage,
+            'sort'         => array_key_exists($str('sort'), self::SORTS) ? $str('sort') : 'newest',
+            'notify_email' => $notify,
+            'owner_mode'   => in_array($str('owner_mode'), self::OWNER_MODES, true) ? $str('owner_mode') : 'email',
+            'runtime_days' => ctype_digit($runtime) ? (string) (int) $runtime : $runtime,
+            'remind_days'  => ctype_digit($remind) ? (string) (int) $remind : $remind,
+            'tags_mode'    => in_array($str('tags_mode'), Taxonomy::TAG_MODES, true) ? $str('tags_mode') : 'off',
+        ];
+        foreach (self::FLAGS as $flag) {
+            $values[$flag] = in_array($str($flag), ['1', 'true'], true) ? '1' : '0';
+        }
+        return [$values, $errors];
+    }
+
     public static function orderBy(array $settings): string
     {
         return self::SORTS[$settings['sort'] ?? ''] ?? self::SORTS['newest'];

@@ -1,0 +1,76 @@
+{
+    "format": "listings-preset",
+    "version": 1,
+    "name": {"de": "Addon-Repository", "en": "Add-on repository"},
+    "description": {
+        "de": "Module, Templates und Droplets zum Herunterladen, mit Version, Kompatibilität, Lizenz und Screenshots. Autoren melden sich mit einem Frontend-Konto an und pflegen ihre Addons selbst; der Admin gibt frei und markiert geprüfte Addons.",
+        "en": "Modules, templates and droplets to download, with version, compatibility, licence and screenshots. Authors log in with a frontend account and keep their add-ons up to date; the admin approves and marks checked add-ons."
+    },
+    "settings": {
+        "per_page": 25,
+        "sort": "updated",
+        "frontend": true,
+        "owner_mode": "account",
+        "approval": true,
+        "recheck": true,
+        "captcha": true,
+        "contact": true,
+        "runtime_days": 0,
+        "remind_days": 7,
+        "tags_mode": "open",
+        "filter_form": true,
+        "rss": true
+    },
+    "fields": [
+        {"name": "addon_type", "type": "select", "label": {"de": "Art", "en": "Type"}, "required": true, "in_list": true, "filterable": true,
+         "choices": [
+            {"value": "module", "label": {"de": "Modul", "en": "Module"}},
+            {"value": "template", "label": "Template"},
+            {"value": "droplet", "label": "Droplet"},
+            {"value": "language", "label": {"de": "Sprachpaket", "en": "Language pack"}}
+         ]},
+        {"name": "summary", "type": "text", "label": {"de": "Kurzbeschreibung", "en": "Summary"}, "required": true, "in_list": true, "options": {"maxlength": 200}},
+        {"name": "version", "type": "text", "label": "Version", "required": true, "in_list": true, "options": {"maxlength": 20},
+         "help": {"de": "Zum Beispiel 1.4.2", "en": "For example 1.4.2"}},
+        {"name": "platform", "type": "checkboxes", "label": {"de": "Läuft mit", "en": "Works with"}, "required": true, "in_list": true, "filterable": true,
+         "choices": [
+            {"value": "wbce16", "label": "WBCE 1.6"},
+            {"value": "wbce17", "label": "WBCE 1.7"},
+            {"value": "wbce2", "label": "WBCE 2.x"}
+         ]},
+        {"name": "php", "type": "select", "label": {"de": "PHP ab", "en": "PHP from"},
+         "choices": [
+            {"value": "7.4", "label": "PHP 7.4"},
+            {"value": "8.1", "label": "PHP 8.1"},
+            {"value": "8.2", "label": "PHP 8.2"},
+            {"value": "8.3", "label": "PHP 8.3"},
+            {"value": "8.4", "label": "PHP 8.4"}
+         ]},
+        {"name": "licence", "type": "select", "label": {"de": "Lizenz", "en": "Licence"}, "filterable": true,
+         "choices": [
+            {"value": "gpl", "label": "GPL"},
+            {"value": "lgpl", "label": "LGPL"},
+            {"value": "mit", "label": "MIT"},
+            {"value": "bsd", "label": "BSD"},
+            {"value": "other", "label": {"de": "Andere", "en": "Other"}}
+         ]},
+        {"name": "checked", "type": "boolean", "label": {"de": "Vom Team geprüft", "en": "Checked by the team"}, "in_list": true, "editable": false},
+        {"name": "description", "type": "textarea", "label": {"de": "Beschreibung", "en": "Description"}, "options": {"maxlength": 10000}},
+        {"name": "changelog", "type": "textarea", "label": {"de": "Änderungen", "en": "Changelog"}, "options": {"maxlength": 10000}},
+        {"name": "screenshots", "type": "gallery", "label": "Screenshots", "options": {"max_files": 8, "max_px": 1920}},
+        {"name": "download", "type": "file", "label": {"de": "Download (ZIP)", "en": "Download (ZIP)"}, "required": true, "options": {"max_files": 3, "max_mb": 20, "extensions": "zip"},
+         "help": {"de": "Das installierbare Archiv. Ältere Versionen dürfen daneben liegen.", "en": "The installable archive. Older versions may stay next to it."}},
+        {"name": "repository", "type": "url", "label": {"de": "Quellcode", "en": "Source code"}},
+        {"name": "homepage", "type": "url", "label": {"de": "Website", "en": "Website"}},
+        {"name": "author", "type": "text", "label": {"de": "Autor", "en": "Author"}, "in_list": true, "options": {"maxlength": 100}}
+    ],
+    "categories": [
+        {"name": {"de": "Inhalte", "en": "Content"}},
+        {"name": "Navigation"},
+        {"name": {"de": "Bilder und Medien", "en": "Images and media"}},
+        {"name": {"de": "Formulare", "en": "Forms"}},
+        {"name": "SEO"},
+        {"name": {"de": "Sicherheit", "en": "Security"}},
+        {"name": {"de": "Werkzeuge", "en": "Tools"}}
+    ]
+}

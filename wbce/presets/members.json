@@ -1,0 +1,61 @@
+{
+    "format": "listings-preset",
+    "version": 1,
+    "name": {"de": "Mitgliederliste", "en": "Member directory"},
+    "description": {
+        "de": "Mitglieder eines Vereins oder Verbands mit Logo, Adresse, Leistungen und Kontaktformular. Mitglieder pflegen ihren Eintrag selbst, der Admin gibt frei. Kein Ablaufdatum.",
+        "en": "Members of a club or association with logo, address, services and contact form. Members keep their entry up to date, the admin approves. No expiry."
+    },
+    "settings": {
+        "per_page": 30,
+        "sort": "title",
+        "frontend": true,
+        "owner_mode": "email",
+        "approval": true,
+        "recheck": true,
+        "captcha": true,
+        "contact": true,
+        "runtime_days": 0,
+        "remind_days": 7,
+        "tags_mode": "off",
+        "filter_form": true,
+        "rss": false
+    },
+    "fields": [
+        {"name": "h_contact", "type": "heading", "label": {"de": "Kontakt", "en": "Contact"}},
+        {"name": "logo", "type": "image", "label": "Logo", "in_list": true, "options": {"max_px": 800, "max_mb": 4}},
+        {"name": "contact_person", "type": "text", "label": {"de": "Ansprechpartner", "en": "Contact person"}, "options": {"maxlength": 100}},
+        {"name": "street", "type": "text", "label": {"de": "Straße und Nr.", "en": "Street"}, "options": {"maxlength": 100}},
+        {"name": "postcode", "type": "text", "label": {"de": "PLZ", "en": "Postcode"}, "in_list": true, "options": {"maxlength": 10}},
+        {"name": "city", "type": "text", "label": {"de": "Ort", "en": "City"}, "required": true, "in_list": true, "options": {"maxlength": 100}},
+        {"name": "region", "type": "select", "label": "Region", "filterable": true,
+         "choices": [
+            {"value": "north", "label": {"de": "Nord", "en": "North"}},
+            {"value": "east", "label": {"de": "Ost", "en": "East"}},
+            {"value": "south", "label": {"de": "Süd", "en": "South"}},
+            {"value": "west", "label": {"de": "West", "en": "West"}}
+         ]},
+        {"name": "phone", "type": "phone", "label": {"de": "Telefon", "en": "Phone"}},
+        {"name": "email", "type": "email", "label": {"de": "E-Mail", "en": "E-mail"},
+         "help": {"de": "Wird öffentlich angezeigt. Ohne Angabe erreichen Besucher Sie über das Kontaktformular.", "en": "Shown publicly. Without it, visitors reach you through the contact form."}},
+        {"name": "website", "type": "url", "label": "Website"},
+        {"name": "h_profile", "type": "heading", "label": {"de": "Profil", "en": "Profile"}},
+        {"name": "description", "type": "textarea", "label": {"de": "Beschreibung", "en": "Description"}, "options": {"maxlength": 3000}},
+        {"name": "services", "type": "checkboxes", "label": {"de": "Leistungen", "en": "Services"}, "filterable": true, "in_list": true,
+         "choices": [
+            {"value": "consulting", "label": {"de": "Beratung", "en": "Consulting"}},
+            {"value": "planning", "label": {"de": "Planung", "en": "Planning"}},
+            {"value": "execution", "label": {"de": "Ausführung", "en": "Execution"}},
+            {"value": "maintenance", "label": {"de": "Wartung", "en": "Maintenance"}},
+            {"value": "training", "label": {"de": "Schulung", "en": "Training"}}
+         ]},
+        {"name": "photos", "type": "gallery", "label": {"de": "Bilder", "en": "Pictures"}, "options": {"max_files": 6}},
+        {"name": "member_since", "type": "number", "label": {"de": "Mitglied seit", "en": "Member since"}, "editable": false, "options": {"min": "1900", "max": "2100"}},
+        {"name": "member_no", "type": "text", "label": {"de": "Mitgliedsnummer", "en": "Membership number"}, "visibility": "admin", "options": {"maxlength": 30}}
+    ],
+    "categories": [
+        {"name": {"de": "Ordentliche Mitglieder", "en": "Full members"}},
+        {"name": {"de": "Fördermitglieder", "en": "Supporting members"}},
+        {"name": {"de": "Ehrenmitglieder", "en": "Honorary members"}}
+    ]
+}

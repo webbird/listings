@@ -1,0 +1,63 @@
+{
+    "format": "listings-preset",
+    "version": 1,
+    "name": {"de": "Kleinanzeigen", "en": "Classified ads"},
+    "description": {
+        "de": "Biete und Suche mit Preis, Zustand und bis zu sechs Fotos. Anzeigen gehen nach der Bestätigung per E-Mail online und laufen nach 30 Tagen ab; Interessenten schreiben über das Kontaktformular.",
+        "en": "Offers and wanted ads with price, condition and up to six photos. Ads go online once confirmed by e-mail and expire after 30 days; buyers write through the contact form."
+    },
+    "settings": {
+        "per_page": 20,
+        "sort": "newest",
+        "frontend": true,
+        "owner_mode": "email",
+        "approval": false,
+        "recheck": false,
+        "captcha": true,
+        "contact": true,
+        "runtime_days": 30,
+        "remind_days": 5,
+        "tags_mode": "off",
+        "filter_form": true,
+        "rss": true
+    },
+    "fields": [
+        {"name": "offer_type", "type": "radio", "label": {"de": "Art", "en": "Type"}, "required": true, "in_list": true, "filterable": true,
+         "choices": [
+            {"value": "offer", "label": {"de": "Biete", "en": "Offer"}},
+            {"value": "wanted", "label": {"de": "Suche", "en": "Wanted"}}
+         ]},
+        {"name": "price", "type": "number", "label": {"de": "Preis (EUR)", "en": "Price (EUR)"}, "in_list": true, "options": {"min": "0", "max": "1000000"}},
+        {"name": "price_type", "type": "select", "label": {"de": "Preisangabe", "en": "Price"}, "in_list": true,
+         "choices": [
+            {"value": "fixed", "label": {"de": "Festpreis", "en": "Fixed price"}},
+            {"value": "negotiable", "label": {"de": "Verhandlungsbasis", "en": "Negotiable"}},
+            {"value": "free", "label": {"de": "Zu verschenken", "en": "Free"}}
+         ]},
+        {"name": "item_condition", "type": "select", "label": {"de": "Zustand", "en": "Condition"}, "filterable": true,
+         "choices": [
+            {"value": "new", "label": {"de": "Neu", "en": "New"}},
+            {"value": "like_new", "label": {"de": "Wie neu", "en": "Like new"}},
+            {"value": "used", "label": {"de": "Gebraucht", "en": "Used"}},
+            {"value": "defective", "label": {"de": "Defekt", "en": "Defective"}}
+         ]},
+        {"name": "description", "type": "textarea", "label": {"de": "Beschreibung", "en": "Description"}, "required": true, "options": {"maxlength": 4000}},
+        {"name": "photos", "type": "gallery", "label": {"de": "Fotos", "en": "Photos"}, "in_list": true, "options": {"max_files": 6, "max_mb": 8, "max_px": 1600}},
+        {"name": "postcode", "type": "text", "label": {"de": "PLZ", "en": "Postcode"}, "options": {"maxlength": 10}},
+        {"name": "city", "type": "text", "label": {"de": "Ort", "en": "City"}, "required": true, "in_list": true, "options": {"maxlength": 100}},
+        {"name": "phone", "type": "phone", "label": {"de": "Telefon", "en": "Phone"},
+         "help": {"de": "Freiwillig und öffentlich sichtbar. Ohne Telefon schreiben Interessenten über das Kontaktformular.", "en": "Optional and shown publicly. Without a phone number, buyers write through the contact form."}}
+    ],
+    "categories": [
+        {"name": {"de": "Haushalt und Wohnen", "en": "Home and living"}},
+        {"name": {"de": "Elektronik", "en": "Electronics"}},
+        {"name": {"de": "Fahrzeuge", "en": "Vehicles"}, "children": [
+            {"name": {"de": "Autos", "en": "Cars"}},
+            {"name": {"de": "Fahrräder", "en": "Bicycles"}},
+            {"name": {"de": "Zubehör", "en": "Accessories"}}
+        ]},
+        {"name": {"de": "Freizeit und Sport", "en": "Leisure and sports"}},
+        {"name": {"de": "Kinder", "en": "Children"}},
+        {"name": {"de": "Sonstiges", "en": "Other"}}
+    ]
+}
