@@ -76,6 +76,15 @@ final class Backend
 
             case 'item':
                 $vars['item'] = $item;
+                $vars['fields'] = Files::withLimits($vars['fields']);
+                $vars['files'] = [];
+                if ($item !== null) {
+                    // the admin sees the files also while the entry is not public
+                    Files::grant($item['item_id']);
+                    $vars['files'] = array_map([Files::class, 'forForm'], Files::forItem($sectionId, $item['item_id']));
+                }
+                $vars['max_post'] = Files::maxPostBytes();
+                $vars['max_post_text'] = Files::formatSize(Files::maxPostBytes());
                 $vars['statuses'] = Items::STATUSES;
                 $vars['form'] = $vars['old'] ?? [
                     'title'   => $item['title'] ?? '',
@@ -138,7 +147,20 @@ final class Backend
                     'maxlength'  => (string) ($field['options']['maxlength'] ?? ''),
                     'min'        => (string) ($field['options']['min'] ?? ''),
                     'max'        => (string) ($field['options']['max'] ?? ''),
+                    'max_files'  => (string) ($field['options']['max_files'] ?? ''),
+                    'max_mb'     => (string) ($field['options']['max_mb'] ?? ''),
+                    'max_px'     => (string) ($field['options']['max_px'] ?? ''),
+                    'extensions' => (string) ($field['options']['extensions'] ?? ''),
                 ];
+                $vars['images_available'] = Files::imagesAvailable();
+                $vars['max_files_limit'] = Files::MAX_FILES_LIMIT;
+                $vars['max_px_limit'] = Files::MAX_PX_LIMIT;
+                $vars['default_max_files'] = Files::DEFAULT_MAX_FILES;
+                $vars['default_max_mb'] = Files::DEFAULT_MAX_MB;
+                $vars['default_max_px'] = Files::DEFAULT_MAX_PX;
+                $vars['default_extensions'] = Files::DEFAULT_EXTENSIONS;
+                $ini = Files::maxBytes(['type' => 'file', 'options' => ['max_mb' => 100000]]);
+                $vars['upload_limit'] = Files::formatSize($ini);
                 break;
 
             case 'layouts':

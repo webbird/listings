@@ -72,3 +72,9 @@
 .lst-backend .lst-inline-form { display: flex; gap: .5em; align-items: center; margin: 0; }
 .lst-backend .lst-inline-form input[type=text] { width: 16rem; max-width: 100%; margin: 0; }
 .lst-backend h3 { margin: 1.5em 0 .6em; }
+/* 0.6: images and files in the entry form */
+.lst-backend .lst-files { display: flex; flex-direction: column; gap: .4em; margin: 0 0 .5em; padding: 0; list-style: none; }
+.lst-backend .lst-files--images { flex-direction: row; flex-wrap: wrap; gap: .75em; }
+.lst-backend .lst-files--images li { display: flex; flex-direction: column; gap: .2em; }
+.lst-backend .lst-files img { display: block; width: 7em; height: 7em; object-fit: cover; border: 1px solid #ddd; border-radius: 3px; }
+.lst-backend .lst-file-remove { font-size: .875em; }

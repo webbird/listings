@@ -121,6 +121,40 @@ final class Fields
             }
         }
 
+        if (Files::isUpload($type)) {
+            $limits = [
+                'max_files' => [1, Files::MAX_FILES_LIMIT],
+                'max_px'    => [100, Files::MAX_PX_LIMIT],
+            ];
+            foreach ($limits as $key => [$low, $high]) {
+                $value = $str($key);
+                if ($value === '' || ($key === 'max_files' && $type === 'image') || ($key === 'max_px' && $type === 'file')) {
+                    continue;
+                }
+                if (!ctype_digit($value) || (int) $value < $low || (int) $value > $high) {
+                    $errors[] = L_('MOD_LISTINGS:ERR_FIELD_LIMIT', L_('MOD_LISTINGS:FIELD_' . strtoupper($key)), $low, $high);
+                } else {
+                    $options[$key] = (int) $value;
+                }
+            }
+            $mb = str_replace(',', '.', $str('max_mb'));
+            if ($mb !== '') {
+                if (!is_numeric($mb) || (float) $mb <= 0 || (float) $mb > 1024) {
+                    $errors[] = L_('MOD_LISTINGS:ERR_FIELD_LIMIT', L_('MOD_LISTINGS:FIELD_MAX_MB'), '0.1', 1024);
+                } else {
+                    $options['max_mb'] = round((float) $mb, 1);
+                }
+            }
+            if ($type === 'file' && $str('extensions') !== '') {
+                $extensions = Files::parseExtensions($str('extensions'));
+                if ($extensions === []) {
+                    $errors[] = L_('MOD_LISTINGS:ERR_FIELD_EXTENSIONS');
+                } else {
+                    $options['extensions'] = implode(', ', $extensions);
+                }
+            }
+        }
+
         $stores = FieldTypes::stores($type);
         $data = [
             'name'       => $name,

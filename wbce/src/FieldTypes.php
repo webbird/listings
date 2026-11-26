@@ -15,7 +15,8 @@ final class FieldTypes
 {
     public const TYPES = [
         'text', 'textarea', 'number', 'email', 'url', 'phone',
-        'date', 'datetime', 'select', 'radio', 'checkboxes', 'boolean', 'heading',
+        'date', 'datetime', 'select', 'radio', 'checkboxes', 'boolean',
+        'image', 'gallery', 'file', 'heading',
     ];
 
     public const CHOICE_TYPES = ['select', 'radio', 'checkboxes'];
@@ -157,7 +158,8 @@ final class FieldTypes
      */
     public static function display(array $field, mixed $value): string
     {
-        if ($value === null || $value === '' || $value === []) {
+        // images and files are not in the entry's data; View passes them as lists
+        if (Files::isUpload($field['type']) || $value === null || $value === '' || $value === []) {
             return '';
         }
         switch ($field['type']) {

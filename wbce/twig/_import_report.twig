@@ -11,6 +11,9 @@
             <td>{{ t(report.form_source == 'forms' ? 'IMPORT_FROM_FORMS' : 'IMPORT_FROM_DATA') }}</td></tr>
         <tr><th scope="row">{{ t('CATEGORIES') }}</th><td>{{ report.counts.categories }}</td><td></td></tr>
         <tr><th scope="row">{{ t('TAGS') }}</th><td>{{ report.counts.tags }}</td><td></td></tr>
+        {% if report.counts.files|default(0) > 0 or report.counts.files_missing|default(0) > 0 %}
+        <tr><th scope="row">{{ t('IMPORT_FILES') }}</th><td>{{ report.counts.files|default(0) }}</td><td></td></tr>
+        {% endif %}
     </tbody>
 </table>
 

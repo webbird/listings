@@ -20,6 +20,9 @@ final class Import
 {
     private const P = '{TP}mod_profiles_';
 
+    /** Files put into the folder during run(), removed again when the import is rolled back. */
+    private static array $written = [];
+
     /** Columns of the items table that become fields of their own. */
     private const COLUMN_FIELDS = [
         'item_url'      => ['name' => 'website', 'type' => 'url', 'label' => 'Website'],
@@ -79,6 +82,7 @@ final class Import
             return ['errors' => [L_('MOD_LISTINGS:ERR_IMPORT_NOT_EMPTY')]] + self::emptyReport();
         }
         $report = [];
+        self::$written = [];
         try {
             // all or nothing: a failure rolls back everything written so far
             $GLOBALS['database']->transaction(function () use ($source, $target, $pageId, $options, $userId, &$report) {
@@ -88,8 +92,12 @@ final class Import
                 }
                 self::takeSettings($source, $target);
             });
+            self::$written = [];
             return $report;
         } catch (\Throwable $e) {
+            // the rollback does not reach the disk: the images and files written so far go as well
+            Files::discard(['new' => self::$written]);
+            self::$written = [];
             if (($report['errors'] ?? []) !== []) {
                 return $report;
             }
@@ -173,6 +181,31 @@ final class Import
         $form = self::formDefinition($settings);
         $report['form_source'] = $form === null ? 'data' : 'forms';
         $fields = self::fieldsFrom($form, $attrs, $items, $text, !empty($options['public_email']));
+
+        // ---- pictures and downloads: one gallery and one file field, if there are any ----
+        $sourceFiles = self::sourceFiles($source, $items, $settings, $in, $itemIds);
+        foreach ($sourceFiles as $kind => $byItem) {
+            if ($byItem === []) {
+                continue;
+            }
+            $found = array_merge(...array_values($byItem));
+            $exts = array_unique(array_map(static fn ($f) => strtolower(pathinfo($f['name'], PATHINFO_EXTENSION)), $found));
+            $most = max(array_map('count', $byItem));
+            $fields[] = [
+                'name'       => self::fieldName($kind === 'pictures' ? 'pictures' : 'files', array_column($fields, 'name')),
+                'label'      => L_($kind === 'pictures' ? 'MOD_LISTINGS:IMPORT_FIELD_PICTURES' : 'MOD_LISTINGS:IMPORT_FIELD_FILES'),
+                'type'       => $kind === 'pictures' ? 'gallery' : 'file',
+                'source'     => 'item_' . $kind,
+                'visibility' => 'public',
+                'in_list'    => $kind === 'pictures' ? 1 : 0,
+                'options'    => $kind === 'pictures'
+                    ? ['max_files' => max(Files::DEFAULT_MAX_FILES['gallery'], $most)]
+                    : ['max_files' => max(Files::DEFAULT_MAX_FILES['file'], $most), 'extensions' => implode(', ', Files::parseExtensions(implode(',', $exts))) ?: Files::DEFAULT_EXTENSIONS],
+                'values'     => count($byItem),
+                'read'       => static fn () => null,
+                'files'      => $byItem,
+            ];
+        }
         foreach ($fields as $f) {
             $report['fields'][] = ['name' => $f['name'], 'label' => $f['label'], 'type' => $f['type'], 'source' => $f['source'], 'values' => $f['values']];
         }
@@ -345,6 +378,33 @@ final class Import
                     return $report;
                 }
             }
+
+            // images are encoded again like uploads; a file that cannot be read is noted, not fatal
+            $plan = ['new' => [], 'remove' => []];
+            foreach ($fields as $f) {
+                foreach ($f['files'][$id] ?? [] as $src) {
+                    if ($src['path'] === null) {
+                        $report['counts']['files_missing']++;
+                        continue;
+                    }
+                    if ($target === null) {
+                        $report['counts']['files']++;
+                        continue;
+                    }
+                    [$file, $error] = Files::fromPath($target['section_id'], $f + ['required' => 0], $src['path'], $src['name']);
+                    if ($file === null) {
+                        $report['notes'][] = $title . ': ' . $error;
+                        continue;
+                    }
+                    self::$written[] = $file;
+                    $plan['new'][] = $file;
+                    $report['counts']['files']++;
+                }
+            }
+            if ($target !== null && $plan['new'] !== [] && !Files::store($target['section_id'], $newId, $plan)) {
+                $report['errors'][] = $database->getError();
+                return $report;
+            }
             $report['counts']['items']++;
         }
         if ($missingCats !== []) {
@@ -352,13 +412,8 @@ final class Import
         }
 
         // ---- what stays behind ----
-        foreach (['item_pictures' => 'IMPORT_SKIP_PICTURES', 'item_files' => 'IMPORT_SKIP_FILES'] as $table => $key) {
-            if ($database->tableExists(self::P . $table)) {
-                $n = (int) $database->fetchValue('SELECT COUNT(*) FROM `' . self::P . $table . '` WHERE `item_id` IN (' . $in . ')', $itemIds);
-                if ($n > 0) {
-                    $report['skipped'][] = L_('MOD_LISTINGS:' . $key, $n);
-                }
-            }
+        if ($report['counts']['files_missing'] > 0) {
+            $report['skipped'][] = L_('MOD_LISTINGS:IMPORT_FILES_MISSING', $report['counts']['files_missing'], MEDIA_DIRECTORY . '/' . self::mediaFolder($settings, $source));
         }
         $passwords = count(array_filter($items, static fn ($r) => (string) $r['item_password'] !== ''));
         if ($passwords > 0) {
@@ -371,12 +426,63 @@ final class Import
         return $report;
     }
 
+    /**
+     * The active pictures (without the thumbnails wbProfiles made) and
+     * downloads of the entries, with the file on disk or null when missing.
+     *
+     * @return array{pictures: array<int, list<array{name: string, path: ?string}>>, files: array<int, list<array{name: string, path: ?string}>>}
+     */
+    private static function sourceFiles(int $source, array $items, array $settings, string $in, array $itemIds): array
+    {
+        global $database;
+        $result = ['pictures' => [], 'files' => []];
+        $catOf = [];
+        foreach ($items as $item) {
+            $catOf[(int) $item['item_id']] = (int) $item['cat_id'];
+        }
+        $folder = self::mediaFolder($settings, $source);
+        foreach (['pictures' => 'item_pictures', 'files' => 'item_files'] as $kind => $table) {
+            if (!$database->tableExists(self::P . $table)) {
+                continue;
+            }
+            $rows = $database->fetchAll(
+                'SELECT * FROM `' . self::P . $table . '` WHERE `item_id` IN (' . $in . ') ORDER BY `item_id`, `file_id`',
+                $itemIds
+            );
+            foreach ($rows as $row) {
+                if (strtoupper((string) ($row['active'] ?? 'Y')) === 'N' || ($kind === 'pictures' && ($row['thumbfor'] ?? null) !== null)) {
+                    continue;
+                }
+                $name = basename(str_replace('\\', '/', (string) $row['file']));
+                $sub = $kind === 'pictures' ? 'profile_pics' : 'profile_files';
+                $path = null;
+                // with "separate subfolders" wbProfiles stored per category, otherwise directly in the folder
+                foreach ([$folder . '/' . $sub . '/cat_' . ($catOf[(int) $row['item_id']] ?? 0) . '/' . $name, $folder . '/' . $name, $folder . '/' . $sub . '/' . $name] as $relative) {
+                    $found = $name !== '' ? wbceSafeRelativePath(WB_PATH . MEDIA_DIRECTORY, $relative) : null;
+                    if ($found !== null && is_file($found)) {
+                        $path = $found;
+                        break;
+                    }
+                }
+                $result[$kind][(int) $row['item_id']][] = ['name' => $name, 'path' => $path];
+            }
+        }
+        return $result;
+    }
+
+    /** The upload folder of a wbProfiles directory, relative to the media folder. */
+    private static function mediaFolder(array $settings, int $source): string
+    {
+        $folder = trim(str_replace('\\', '/', (string) ($settings['upload_files_folder'] ?? '')), '/');
+        return $folder !== '' ? $folder : 'wbProfiles/profile_files_for_section_' . $source;
+    }
+
     private static function emptyReport(): array
     {
         return [
             'form_source' => '',
             'fields'  => [],
-            'counts'  => ['items' => 0, 'pending' => 0, 'expired' => 0, 'categories' => 0, 'tags' => 0, 'html' => 0, 'repaired' => 0, 'broken' => 0],
+            'counts'  => ['items' => 0, 'pending' => 0, 'expired' => 0, 'categories' => 0, 'tags' => 0, 'html' => 0, 'repaired' => 0, 'broken' => 0, 'files' => 0, 'files_missing' => 0],
             'notes'   => [],
             'skipped' => [],
             'errors'  => [],

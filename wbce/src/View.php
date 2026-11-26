@@ -90,6 +90,10 @@ final class View
             'errors'     => $errors,
             'success'    => (string) ($flash['success'] ?? ''),
             'account'    => $account,
+            // a request beyond post_max_size arrives without fields; the URL still names the section
+            'upload_action' => WB_URL . '/modules/' . Module::DIR . '/submit.php?section_id=' . $sectionId,
+            'max_post'      => Files::maxPostBytes(),
+            'max_post_text' => Files::formatSize(Files::maxPostBytes()),
         ];
         $invalid = static fn () => self::template('message', ['text' => L_('MOD_LISTINGS:LINK_INVALID'), 'type' => 'error', 'list_url' => $baseUrl, 'link_url' => $vars['link_url']]);
 
@@ -188,7 +192,8 @@ final class View
             'mode'     => 'new',
             'token'    => '',
             'item'     => null,
-            'fields'   => Fields::forOwner(Fields::forSection($sectionId)),
+            'fields'   => Files::withLimits(Fields::forOwner(Fields::forSection($sectionId))),
+            'files'    => [],
             'values'   => $old ?? [],
             'approval' => Settings::on($settings, 'approval'),
         ]);
@@ -203,10 +208,13 @@ final class View
     {
         $sectionId = $vars['section_id'];
         $tax = Taxonomy::forItems($sectionId, [$item['item_id']])[$item['item_id']];
+        // the owner sees the own images also while the entry waits or is not public
+        Files::grant($item['item_id']);
         return self::template('form', $vars + $auth + self::taxonomyVars($sectionId, $settings) + [
             'mode'       => 'edit',
             'item'       => $item,
-            'fields'     => Fields::forOwner(Fields::forSection($sectionId)),
+            'fields'     => Files::withLimits(Fields::forOwner(Fields::forSection($sectionId))),
+            'files'      => array_map([Files::class, 'forForm'], Files::forItem($sectionId, $item['item_id'])),
             'values'     => $old ?? [
                 'title'      => $item['title'],
                 'fields'     => $item['data'],
@@ -248,8 +256,9 @@ final class View
                 // the contact form is HTML rendered here; the editable layout only places it
                 $parser->setRawKeys(['CONTACT']);
                 $tax = Taxonomy::forItems($sectionId, [$item['item_id']])[$item['item_id']];
+                $files = Files::forItem($sectionId, $item['item_id']);
                 return $parser->parse(Layouts::get($settings, 'detail'), [
-                    'ITEM'       => self::itemData($item, $fields, $baseUrl, false, $tax, $tagsOn, $sectionId),
+                    'ITEM'       => self::itemData($item, $fields, $baseUrl, false, $tax, $tagsOn, $sectionId, $files),
                     'CONTACT'    => self::contactForm($sectionId, $settings, $item, $flash),
                     'LIST_URL'   => $baseUrl,
                     'SECTION_ID' => $sectionId,
@@ -271,6 +280,7 @@ final class View
         $page = self::currentPage($sectionId, $pages);
         $items = Items::list($sectionId, null, true, Settings::orderBy($settings), $perPage, ($page - 1) * $perPage, $filter['items']);
         $taxonomy = Taxonomy::forItems($sectionId, array_column($items, 'item_id'));
+        $files = Files::forItems($sectionId, array_column($items, 'item_id'));
 
         if (Settings::on($settings, 'rss')) {
             $link = ['rel' => 'alternate', 'type' => 'application/rss+xml', 'title' => WEBSITE_TITLE, 'href' => self::rssUrl($sectionId)];
@@ -289,7 +299,7 @@ final class View
         // the filter form is HTML rendered here; the editable layout only places it
         $parser->setRawKeys(['FILTER']);
         return $parser->parse(Layouts::get($settings, 'list'), [
-            'ITEMS'      => array_map(static fn ($i) => self::itemData($i, $fields, $baseUrl, true, $taxonomy[$i['item_id']], $tagsOn, $sectionId), $items),
+            'ITEMS'      => array_map(static fn ($i) => self::itemData($i, $fields, $baseUrl, true, $taxonomy[$i['item_id']], $tagsOn, $sectionId, $files[$i['item_id']] ?? []), $items),
             'COUNT'      => $total,
             'PAGE'       => $page,
             'PAGES'      => $pages,
@@ -420,8 +430,9 @@ final class View
      *
      * @param list<array<string, mixed>> $fields public fields
      * @param array{categories: list<array>, tags: list<array>}|null $tax from Taxonomy::forItems()
+     * @param array<string, list<array<string, mixed>>> $files from Files::forItem(), by field name
      */
-    public static function itemData(array $item, array $fields, string $baseUrl, bool $listOnly, ?array $tax = null, bool $tagsOn = false, int $sectionId = 0): array
+    public static function itemData(array $item, array $fields, string $baseUrl, bool $listOnly, ?array $tax = null, bool $tagsOn = false, int $sectionId = 0, array $files = []): array
     {
         $data = [
             'ID'        => $item['item_id'],
@@ -434,8 +445,42 @@ final class View
             'EXPIRES'   => $item['expires_at'],
             'FIELDS'    => [],
             'RAW'       => [],
+            // the first image: in the list of a field marked "show in list", in the detail of any public image field
+            'IMAGE'     => '',
+            'THUMB'     => '',
+            'IMAGE_NAME' => '',
         ];
         foreach ($fields as $field) {
+            if (Files::isUpload($field['type'])) {
+                // a loop per field: URL, THUMB (images), NAME, SIZE, DOWNLOADS (files), WIDTH, HEIGHT
+                $list = array_map(static fn ($f) => [
+                    'URL'       => Files::url($f),
+                    'THUMB'     => Files::url($f, true),
+                    'NAME'      => $f['filename'],
+                    'SIZE'      => Files::formatSize($f['size']),
+                    'DOWNLOADS' => $f['downloads'],
+                    'WIDTH'     => $f['width'],
+                    'HEIGHT'    => $f['height'],
+                ], $files[$field['name']] ?? []);
+                $key = strtoupper($field['name']);
+                $data[$key] = $list;
+                if ($list !== [] && Files::isImage($field['type']) && $data['IMAGE'] === '' && (!$listOnly || $field['in_list'])) {
+                    $data['IMAGE'] = $list[0]['URL'];
+                    $data['THUMB'] = $list[0]['THUMB'];
+                    $data['IMAGE_NAME'] = $list[0]['NAME'];
+                }
+                // the list shows the first image only; the detail every field with its files
+                if ($list !== [] && !$listOnly) {
+                    $data['FIELDS'][] = [
+                        'NAME'  => $field['name'],
+                        'LABEL' => $field['label'],
+                        'TYPE'  => $field['type'],
+                        'VALUE' => (string) count($list),
+                        'FILES' => $list,
+                    ];
+                }
+                continue;
+            }
             $raw = $item['data'][$field['name']] ?? null;
             $display = FieldTypes::display($field, $raw);
             $key = strtoupper($field['name']);
@@ -447,6 +492,7 @@ final class View
                     'LABEL' => $field['label'],
                     'TYPE'  => $field['type'],
                     'VALUE' => $display,
+                    'FILES' => [],
                 ];
             }
         }

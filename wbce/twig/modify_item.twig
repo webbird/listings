@@ -4,7 +4,7 @@
 {% extends 'modify.twig' %}
 {% block content %}
 <h3>{{ item is null ? t('NEW_ITEM') : t('EDIT_ITEM', item.title) }}</h3>
-<form method="post" action="{{ action }}" class="lst-form">
+<form method="post" action="{{ action }}" class="lst-form" enctype="multipart/form-data" data-lst-max-post="{{ max_post }}" data-lst-post-too-big="{{ t('ERR_POST_SIZE', max_post_text) }}">
     {% include '_hidden.twig' %}
     <input type="hidden" name="lst_action" value="item_save">
     {% if item is not null %}<input type="hidden" name="lst_item" value="{{ idkey('item', item.item_id) }}">{% endif %}
@@ -25,7 +25,7 @@
                 {% elseif f.visibility == 'owner' %}<span class="lst-badge">{{ t('NOT_PUBLIC') }}</span>{% endif %}
             </label>
             <div>
-                {% include '_field.twig' with {f: f, v: form.fields[f.name]|default(null)} only %}
+                {% include '_field.twig' with {f: f, v: form.fields[f.name]|default(null), files: files[f.name]|default([])} only %}
                 {% if f.help != '' %}<p class="lst-help">{{ f.help }}</p>{% endif %}
             </div>
         </div>

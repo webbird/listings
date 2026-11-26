@@ -1,6 +1,7 @@
 {#
     listings/twig/_field.twig – the input of one field (f) with its value (v),
-    named fields[<name>]; used by the backend and the owner's form alike
+    named fields[<name>]; used by the backend and the owner's form alike.
+    Image and file fields also get files (the stored ones) and f.upload (limits, Files::withLimits()).
 #}
 {% set name = 'fields[' ~ f.name ~ ']' %}
 {% set id = 'lst_f_' ~ f.name %}
@@ -8,6 +9,29 @@
 {% set choices = f.options.choices|default([]) %}
 {% if f.type == 'heading' %}
     <h3 class="lst-form-heading">{{ f.label }}</h3>
+{% elseif f.type in ['image', 'gallery', 'file'] %}
+    {# files: the stored ones with a box to remove them, then the input for new ones (uploads[<name>][]) #}
+    {% set stored = files|default([]) %}
+    {% set upload = f.upload|default({}) %}
+    {% if stored is not empty %}
+    <ul class="lst-files{{ f.type != 'file' ? ' lst-files--images' }}">
+        {% for file in stored %}
+        <li>
+            {% if file.kind == 'image' %}
+                <a href="{{ file.url }}" target="_blank" rel="noopener"><img src="{{ file.thumb_url }}" alt="{{ file.filename }}" loading="lazy"></a>
+            {% else %}
+                <a href="{{ file.url }}">{{ file.filename }}</a> <span class="lst-help">({{ file.size_text }})</span>
+            {% endif %}
+            <label class="lst-file-remove"><input type="checkbox" name="files_remove[]" value="{{ file.file_id }}"> {{ t('FILE_REMOVE') }}</label>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <input type="file" name="uploads[{{ f.name }}][]" id="{{ id }}" accept="{{ upload.accept }}"
+        {%- if f.type != 'image' %} multiple{% endif %}
+        {%- if f.required and stored is empty %} required{% endif %}
+        data-lst-max-bytes="{{ upload.max_bytes }}" data-lst-too-big="{{ t('ERR_FILE_SIZE', '%name%', upload.max_text) }}">
+    <p class="lst-help">{{ f.type == 'image' and stored is not empty ? t('HELP_IMAGE_REPLACE') ~ ' ' }}{{ t(f.type == 'file' ? 'HELP_FILE_LIMITS' : (f.type == 'image' ? 'HELP_ONE_IMAGE' : 'HELP_IMAGE_LIMITS'), upload.max_files, upload.max_text, upload.extensions) }}</p>
 {% elseif f.type == 'textarea' %}
     <textarea name="{{ name }}" id="{{ id }}" rows="6" maxlength="{{ maxlength(f) }}"{% if f.required %} required{% endif %}>{{ text }}</textarea>
 {% elseif f.type == 'number' %}

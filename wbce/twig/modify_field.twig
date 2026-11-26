@@ -4,7 +4,7 @@
 {% extends 'modify.twig' %}
 {% block content %}
 {# the types that store a value; a heading has no options #}
-{% set storing = 'text textarea number email url phone date datetime select radio checkboxes boolean' %}
+{% set storing = 'text textarea number email url phone date datetime select radio checkboxes boolean image gallery file' %}
 <h3>{{ field is null ? t('NEW_FIELD') : t('EDIT_FIELD', field.label) }}</h3>
 <form method="post" action="{{ action }}" class="lst-form lst-field-form">
     {% include '_hidden.twig' %}
@@ -52,6 +52,34 @@
         <div>
             <input type="text" id="lst_min" name="min" size="8" value="{{ form.min }}" placeholder="min"> –
             <input type="text" name="max" size="8" value="{{ form.max }}" placeholder="max" aria-label="max">
+        </div>
+    </div>
+    {% if not images_available %}
+    <p class="lst-message lst-error" data-lst-for="image gallery">{{ t('ERR_NO_GD') }}</p>
+    {% endif %}
+    <div class="lst-row" data-lst-for="gallery file">
+        <label for="lst_max_files">{{ t('FIELD_MAX_FILES') }}</label>
+        <div><input type="number" id="lst_max_files" name="max_files" min="1" max="{{ max_files_limit }}" value="{{ form.max_files }}" placeholder="{{ form.type == 'file' ? default_max_files.file : default_max_files.gallery }}"></div>
+    </div>
+    <div class="lst-row" data-lst-for="image gallery file">
+        <label for="lst_max_mb">{{ t('FIELD_MAX_MB') }}</label>
+        <div>
+            <input type="number" id="lst_max_mb" name="max_mb" min="0.1" step="0.1" value="{{ form.max_mb }}" placeholder="{{ form.type == 'file' ? default_max_mb.file : default_max_mb.image }}">
+            <p class="lst-help">{{ t('HELP_MAX_MB', upload_limit) }}</p>
+        </div>
+    </div>
+    <div class="lst-row" data-lst-for="image gallery">
+        <label for="lst_max_px">{{ t('FIELD_MAX_PX') }}</label>
+        <div>
+            <input type="number" id="lst_max_px" name="max_px" min="100" max="{{ max_px_limit }}" value="{{ form.max_px }}" placeholder="{{ default_max_px }}">
+            <p class="lst-help">{{ t('HELP_MAX_PX') }}</p>
+        </div>
+    </div>
+    <div class="lst-row" data-lst-for="file">
+        <label for="lst_extensions">{{ t('FIELD_EXTENSIONS') }}</label>
+        <div>
+            <input type="text" id="lst_extensions" name="extensions" maxlength="255" value="{{ form.extensions }}" placeholder="{{ default_extensions }}">
+            <p class="lst-help">{{ t('HELP_EXTENSIONS') }}</p>
         </div>
     </div>
 

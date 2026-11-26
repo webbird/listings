@@ -106,3 +106,26 @@ CREATE TABLE IF NOT EXISTS `{TP}mod_listings_item_tags` (
     KEY `tag_id` (`tag_id`),
     KEY `section_id` (`section_id`)
 ) {TABLE_ENGINE};
+
+-- 0.6: images and files of entries; stored as media/listings/<section_id>/<file_key>[_t].<ext>
+CREATE TABLE IF NOT EXISTS `{TP}mod_listings_files` (
+    `file_id`    INT NOT NULL AUTO_INCREMENT,
+    `section_id` INT NOT NULL DEFAULT 0,
+    `item_id`    INT NOT NULL DEFAULT 0,
+    `field`      VARCHAR(40) NOT NULL DEFAULT '',
+    `kind`       VARCHAR(10) NOT NULL DEFAULT 'file',
+    `file_key`   CHAR(32) NOT NULL DEFAULT '',
+    `ext`        VARCHAR(10) NOT NULL DEFAULT '',
+    `filename`   VARCHAR(255) NOT NULL DEFAULT '',
+    `mime`       VARCHAR(100) NOT NULL DEFAULT '',
+    `size`       INT NOT NULL DEFAULT 0,
+    `width`      INT NOT NULL DEFAULT 0,
+    `height`     INT NOT NULL DEFAULT 0,
+    `position`   INT NOT NULL DEFAULT 0,
+    `downloads`  INT NOT NULL DEFAULT 0,
+    `created_at` INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`file_id`),
+    UNIQUE KEY `file_key` (`file_key`),
+    KEY `item_field` (`item_id`, `field`, `position`),
+    KEY `section_id` (`section_id`)
+) {TABLE_ENGINE};

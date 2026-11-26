@@ -37,3 +37,16 @@
 .mod_listings .lst-level-1 { padding-left: 1.25em; }
 .mod_listings .lst-level-2 { padding-left: 2.5em; }
 .mod_listings .lst-level-3, .mod_listings .lst-level-4 { padding-left: 3.75em; }
+/* 0.6: images and files */
+.mod_listings .lst-item::after { content: ""; display: block; clear: both; }
+.mod_listings .lst-thumb { float: right; margin: 0 0 .5em 1em; }
+.mod_listings .lst-thumb img { display: block; width: 8em; height: 8em; object-fit: cover; border-radius: 3px; }
+.mod_listings .lst-images { display: flex; flex-wrap: wrap; gap: .5em; }
+.mod_listings .lst-images img { display: block; width: 10em; height: 10em; object-fit: cover; border-radius: 3px; }
+.mod_listings .lst-downloads { margin: 0; padding-left: 1.2em; }
+.mod_listings .lst-size { font-size: .875em; opacity: .75; }
+.mod_listings .lst-files { display: flex; flex-direction: column; gap: .4em; margin: 0 0 .5em; padding: 0; list-style: none; }
+.mod_listings .lst-files--images { flex-direction: row; flex-wrap: wrap; gap: .75em; }
+.mod_listings .lst-files--images li { display: flex; flex-direction: column; gap: .2em; }
+.mod_listings .lst-files img { display: block; width: 7em; height: 7em; object-fit: cover; border-radius: 3px; }
+.mod_listings .lst-file-remove { font-size: .875em; font-weight: 400; }

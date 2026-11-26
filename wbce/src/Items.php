@@ -104,7 +104,8 @@ final class Items
         $data = $existing['data'] ?? [];
         $submitted = is_array($input['fields'] ?? null) ? $input['fields'] : [];
         foreach ($fields as $field) {
-            if (!FieldTypes::stores($field['type'])) {
+            // images and files are checked by Files::check() and live in their own table
+            if (!FieldTypes::stores($field['type']) || Files::isUpload($field['type'])) {
                 continue;
             }
             [$value, $error] = FieldTypes::validate($field, $submitted[$field['name']] ?? null);
@@ -340,6 +341,7 @@ final class Items
             return false;
         }
         Tokens::deleteForItem($itemId);
+        Files::deleteForItem($sectionId, $itemId);
         Taxonomy::deleteForItem($sectionId, $itemId);
         return true;
     }

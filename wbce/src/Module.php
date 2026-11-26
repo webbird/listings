@@ -166,7 +166,8 @@ final class Module
     public static function deleteSection(int $sectionId): void
     {
         global $database;
-        foreach (['item_tags', 'tags', 'item_categories', 'categories', 'tokens', 'items', 'fields', 'settings'] as $table) {
+        Files::deleteSection($sectionId);
+        foreach (['files', 'item_tags', 'tags', 'item_categories', 'categories', 'tokens', 'items', 'fields', 'settings'] as $table) {
             $database->deleteRow('{TP}mod_listings_' . $table, 'section_id', $sectionId);
             if ($database->hasError()) {
                 trigger_error('Listings: ' . $database->getError(), E_USER_WARNING);

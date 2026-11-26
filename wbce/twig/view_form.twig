@@ -25,7 +25,7 @@
         {% endif %}
     {% endif %}
 
-    <form method="post" action="{{ action }}" class="lst-owner-form">
+    <form method="post" action="{{ upload_action }}" class="lst-owner-form" enctype="multipart/form-data" data-lst-max-post="{{ max_post }}" data-lst-post-too-big="{{ t('ERR_POST_SIZE', max_post_text) }}">
         <input type="hidden" name="section_id" value="{{ section_id }}">
         {{ FTAN|raw }}
         <input type="hidden" name="lst_action" value="{{ is_new ? 'create' : 'update' }}">
@@ -53,7 +53,7 @@
                     {{ f.label }}{{ f.required ? ' *' }}
                     {% if f.visibility == 'owner' %}<span class="lst-badge">{{ t('NOT_PUBLIC') }}</span>{% endif %}
                 </label>
-                {% include '_field.twig' with {f: f, v: values.fields[f.name]|default(null)} only %}
+                {% include '_field.twig' with {f: f, v: values.fields[f.name]|default(null), files: files[f.name]|default([])} only %}
                 {% if f.help != '' %}<p class="lst-help">{{ f.help }}</p>{% endif %}
             </div>
             {% endif %}

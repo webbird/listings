@@ -30,7 +30,10 @@ final class Submission
     public static function handle(\Frontend $wb): never
     {
         global $database;
-        $sectionId = is_string($_POST['section_id'] ?? null) ? (int) $_POST['section_id'] : 0;
+        // beyond post_max_size PHP drops every field; the form names its section in the URL as well
+        $tooBig = $_POST === [] && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0;
+        $sectionId = is_string($_POST['section_id'] ?? null) ? (int) $_POST['section_id']
+            : ($tooBig && is_string($_GET['section_id'] ?? null) ? (int) $_GET['section_id'] : 0);
         $section = $database->fetchRow(
             'SELECT `page_id`, `module` FROM `{TP}sections` WHERE `section_id` = ?',
             [$sectionId]
@@ -40,6 +43,14 @@ final class Submission
             exit;
         }
         $self = new self($wb, $sectionId, (int) $section['page_id']);
+        if ($tooBig) {
+            // back to the form the visitor came from, if it is on this site
+            $referer = (string) ($_SERVER['HTTP_REFERER'] ?? '');
+            $self->fail(
+                [L_('MOD_LISTINGS:ERR_POST_SIZE', Files::formatSize(Files::maxPostBytes()))],
+                str_starts_with($referer, WB_URL . '/') ? $referer : $self->pageUrl
+            );
+        }
         $action = $self->post('lst_action');
         // the contact form belongs to the public detail page, not to entries by visitors
         if ($action !== 'contact' && !Settings::on($self->settings, 'frontend')) {
@@ -101,6 +112,10 @@ final class Submission
         if (!$account && $errors === [] && Tokens::recentCount($this->sectionId, $values['owner_email']) >= Tokens::MAX_PER_HOUR) {
             $errors[] = L_('MOD_LISTINGS:ERR_TOO_MANY');
         }
+        $files = ['new' => [], 'remove' => []];
+        if ($errors === []) {
+            [$files, $errors] = Files::check($this->sectionId, $fields, null, $_FILES['uploads'] ?? null, null);
+        }
         if ($errors !== []) {
             $this->fail($errors, $formUrl, $old);
         }
@@ -113,7 +128,10 @@ final class Submission
             $values['status'] = $approval ? 'pending' : 'published';
             $values['owner_user_id'] = $this->user['id'];
             $itemId = Items::save($this->sectionId, $this->pageId, null, $values, $this->user['id']);
-            if ($itemId === null || !$this->assign($itemId)) {
+            if ($itemId === null) {
+                Files::discard($files);
+            }
+            if ($itemId === null || !Files::store($this->sectionId, $itemId, $files) || !$this->assign($itemId)) {
                 $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $formUrl, $old);
             }
             $saved = ['item_id' => $itemId] + $values;
@@ -126,7 +144,10 @@ final class Submission
 
         $values['status'] = 'draft';
         $itemId = Items::save($this->sectionId, $this->pageId, null, $values, 0);
-        $token = $itemId === null || !$this->assign($itemId) ? null : Tokens::create($this->sectionId, $itemId, Tokens::CONFIRM, $values['owner_email']);
+        if ($itemId === null) {
+            Files::discard($files);
+        }
+        $token = $itemId === null || !Files::store($this->sectionId, $itemId, $files) || !$this->assign($itemId) ? null : Tokens::create($this->sectionId, $itemId, Tokens::CONFIRM, $values['owner_email']);
         if ($token === null) {
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $formUrl, $old);
         }
@@ -187,12 +208,17 @@ final class Submission
         $old = ['title' => $this->post('title'), 'fields' => is_array($_POST['fields'] ?? null) ? $_POST['fields'] : []] + $this->taxonomyInput();
 
         // the owner changes title and own fields; expiry and slug stay
-        [$values, $errors] = Items::check($this->sectionId, Fields::forOwner(Fields::forSection($this->sectionId)), [
+        $fields = Fields::forOwner(Fields::forSection($this->sectionId));
+        [$values, $errors] = Items::check($this->sectionId, $fields, [
             'title'   => $old['title'],
             'slug'    => $item['slug'],
             'expires' => $item['expires_at'] > 0 ? date('Y-m-d', $item['expires_at']) : '',
             'fields'  => $old['fields'],
         ], $item);
+        $files = ['new' => [], 'remove' => []];
+        if ($errors === []) {
+            [$files, $errors] = Files::check($this->sectionId, $fields, $item['item_id'], $_FILES['uploads'] ?? null, $_POST['files_remove'] ?? null);
+        }
         if ($errors !== []) {
             $this->fail($errors, $editUrl, $old);
         }
@@ -210,8 +236,11 @@ final class Submission
             // mails follow the address of the account, also after it changed
             $values['owner_email'] = $this->user['email'];
         }
-        if (Items::save($this->sectionId, $this->pageId, $item, $values, (int) ($this->user['id'] ?? 0)) === null
-            || !$this->assign($item['item_id'])) {
+        if (Items::save($this->sectionId, $this->pageId, $item, $values, (int) ($this->user['id'] ?? 0)) === null) {
+            Files::discard($files);
+            $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $editUrl, $old);
+        }
+        if (!Files::store($this->sectionId, $item['item_id'], $files) || !$this->assign($item['item_id'])) {
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $editUrl, $old);
         }
         $nowWaiting = $status === 'pending' && $item['status'] !== 'pending';

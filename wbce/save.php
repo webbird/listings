@@ -14,6 +14,7 @@ require WB_PATH . '/modules/admin.php';
 require_once __DIR__ . '/bootstrap.php';
 
 use Listings\Fields;
+use Listings\Files;
 use Listings\Import;
 use Listings\Items;
 use Listings\Layouts;
@@ -63,7 +64,13 @@ switch ($post('lst_action')) {
             }
         }
         $formParams = ['lst_view' => 'item'] + ($existing === null ? [] : ['lst_item' => $existing['item_id']]);
-        [$values, $errors] = Items::check($sectionId, Fields::forSection($sectionId), $_POST, $existing);
+        $fields = Fields::forSection($sectionId);
+        [$values, $errors] = Items::check($sectionId, $fields, $_POST, $existing);
+        // uploads are only prepared when the rest is valid: the browser cannot send them again with the old values
+        $files = ['new' => [], 'remove' => []];
+        if ($errors === []) {
+            [$files, $errors] = Files::check($sectionId, $fields, $existing['item_id'] ?? null, $_FILES['uploads'] ?? null, $_POST['files_remove'] ?? null);
+        }
         if ($errors !== []) {
             $fail($errors, $formParams, [
                 'title'   => $post('title'),
@@ -78,8 +85,12 @@ switch ($post('lst_action')) {
         }
         $savedId = Items::save($sectionId, $pageId, $existing, $values, (int) $admin->get_user_id());
         [$cats, $tags] = Taxonomy::fromInput($sectionId, $_POST, Settings::load($sectionId)['tags_mode'], true);
-        if ($savedId === null || !Taxonomy::assign($sectionId, $savedId, $cats, $tags)) {
+        if ($savedId === null) {
+            Files::discard($files);
             $fail([$dbError], $formParams);
+        }
+        if (!Files::store($sectionId, $savedId, $files) || !Taxonomy::assign($sectionId, $savedId, $cats, $tags)) {
+            $fail([$dbError], ['lst_view' => 'item', 'lst_item' => $savedId]);
         }
         // the owner hears of a decision, also when it is taken in the form
         if ($existing !== null && $existing['status'] !== $values['status']) {
