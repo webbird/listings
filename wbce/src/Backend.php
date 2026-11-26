@@ -12,9 +12,11 @@ defined('WB_PATH') or die('This file cannot be accessed directly!');
 
 final class Backend
 {
-    public const VIEWS = ['items', 'item', 'fields', 'field', 'categories', 'category', 'layouts', 'settings', 'import', 'presets'];
+    public const VIEWS = ['items', 'item', 'fields', 'field', 'categories', 'category', 'layouts', 'settings', 'import', 'presets', 'log'];
 
     public const ITEMS_PER_PAGE = 50;
+
+    public const LOG_PER_PAGE = 100;
 
     /** Entries waiting for approval on top, then the last changed. */
     private const ORDER_WAITING_FIRST = "CASE WHEN `status` = 'pending' THEN 0 ELSE 1 END, `updated_at` DESC, `item_id` DESC";
@@ -28,6 +30,7 @@ final class Backend
 
         // WBCE has no cron: unconfirmed frontend entries are also removed on backend calls
         Items::purgeUnconfirmed($sectionId);
+        Log::purge($sectionId);
         Reminders::run($sectionId, Settings::load($sectionId));
 
         $flash = Module::takeFlash($sectionId);
@@ -83,6 +86,20 @@ final class Backend
                     Files::grant($item['item_id']);
                     $vars['files'] = array_map([Files::class, 'forForm'], Files::forItem($sectionId, $item['item_id']));
                 }
+                $vars['history'] = $item === null ? [] : Log::forSection($sectionId, 20, 0, $item['item_id']);
+                // HTML fields get the editor of the site; its result is cleaned again on saving
+                $values = $vars['old']['fields'] ?? $item['data'] ?? [];
+                foreach ($vars['fields'] as &$field) {
+                    if ($field['type'] === 'html' && class_exists('WysiwygEditor')) {
+                        $value = is_string($values[$field['name']] ?? null) ? $values[$field['name']] : '';
+                        $field['editor'] = \WysiwygEditor::render('lst_f_' . $field['name'], Html::clean($value), [
+                            'name'   => 'fields[' . $field['name'] . ']',
+                            'height' => '260',
+                            'config' => 'small>default',
+                        ]);
+                    }
+                }
+                unset($field);
                 $vars['max_post'] = Files::maxPostBytes();
                 $vars['max_post_text'] = Files::formatSize(Files::maxPostBytes());
                 $vars['statuses'] = Items::STATUSES;
@@ -171,6 +188,22 @@ final class Backend
                     $vars['layouts'][$name] = $vars['old']['layout_' . $name] ?? Layouts::get($settings, $name);
                     $vars['custom'][$name] = trim($settings['layout_' . $name]) !== '';
                 }
+                $vars['form_intro'] = $vars['old']['form_intro'] ?? $settings['form_intro'];
+                $vars['form_intro_max'] = Settings::FORM_INTRO_MAX;
+                $language = Mail::language($sectionId);
+                $vars['mails'] = [];
+                foreach (array_keys(Mail::KINDS) as $kind) {
+                    $template = Mail::template($settings, $kind, $language);
+                    $sent = $vars['old']['mails_sent'][$kind] ?? null;
+                    $vars['mails'][$kind] = [
+                        'subject'      => $sent['subject'] ?? $template['subject'],
+                        'text'         => $sent['text'] ?? $template['text'],
+                        'custom'       => $template['custom'],
+                        'placeholders' => Mail::KINDS[$kind]['placeholders'],
+                        'required'     => Mail::KINDS[$kind]['required'],
+                        'sample'       => Mail::sample($sectionId, $kind),
+                    ];
+                }
                 $vars['field_keys'] = array_values(array_map(
                     static fn ($f) => strtoupper($f['name']),
                     // layouts receive the public fields only
@@ -186,9 +219,32 @@ final class Backend
                 $vars['owner_modes'] = Settings::OWNER_MODES;
                 $vars['login_available'] = defined('FRONTEND_LOGIN') && FRONTEND_LOGIN;
                 $vars['runtime_max'] = Settings::RUNTIME_MAX;
+                $vars['max_per_owner_limit'] = Settings::MAX_PER_OWNER_LIMIT;
                 $vars['tag_modes'] = Taxonomy::TAG_MODES;
                 $vars['rss_url'] = WB_URL . '/modules/' . Module::DIR . '/rss.php?section_id=' . $sectionId;
                 $vars['import_available'] = Import::available();
+                break;
+
+            case 'log':
+                $total = Log::count($sectionId);
+                $pages = max(1, (int) ceil($total / self::LOG_PER_PAGE));
+                $page = max(1, min($pages, (int) $param('lst_page')));
+                $vars['entries'] = Log::forSection($sectionId, self::LOG_PER_PAGE, ($page - 1) * self::LOG_PER_PAGE);
+                $vars['total'] = $total;
+                $vars['page'] = $page;
+                $vars['pages'] = $pages;
+                $vars['keep_days'] = Log::KEEP_DAYS;
+                // links only to entries that still exist
+                $ids = array_values(array_unique(array_filter(array_column($vars['entries'], 'item_id'))));
+                $vars['existing'] = [];
+                $vars['titles'] = [];
+                foreach ($ids as $id) {
+                    $found = Items::find($sectionId, $id);
+                    if ($found !== null) {
+                        $vars['existing'][] = $id;
+                        $vars['titles'][$id] = $found['title'];
+                    }
+                }
                 break;
 
             case 'presets':
@@ -219,6 +275,7 @@ final class Backend
         $twig = Module::twig([
             'url'   => static fn (array $params = []): string => Module::modifyUrl($pageId, $sectionId, $params),
             'idkey' => static fn (string $purpose, int $id): string => Module::idKey($admin, $purpose, $id),
+            'idkey_list' => static fn (string $purpose, iterable $ids): string => Module::idKeyList($admin, $purpose, array_values([...$ids])),
         ]);
         return $twig->render('modify_' . $view . '.twig', $vars);
     }

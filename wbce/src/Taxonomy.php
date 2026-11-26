@@ -275,13 +275,18 @@ final class Taxonomy
         return $ids;
     }
 
-    /** Returns an error message or null. */
-    public static function renameTag(int $sectionId, array $tag, string $name): ?string
+    /**
+     * Renames a tag. When another tag already has the name, both become
+     * one: the entries of this tag get the other, and this one goes.
+     *
+     * @return array{0: ?string, 1: ?string} [error message or null, name of the tag merged into or null]
+     */
+    public static function renameTag(int $sectionId, array $tag, string $name): array
     {
         global $database;
         $name = mb_substr(trim(preg_replace('/\s+/u', ' ', $name) ?? ''), 0, 100);
         if ($name === '') {
-            return L_('MOD_LISTINGS:ERR_TAG_NAME');
+            return [L_('MOD_LISTINGS:ERR_TAG_NAME'), null];
         }
         $slug = self::slugify($name);
         $other = (int) $database->fetchValue(
@@ -289,13 +294,39 @@ final class Taxonomy
             [$sectionId, $slug, $tag['tag_id']]
         );
         if ($other > 0) {
-            return L_('MOD_LISTINGS:ERR_TAG_TAKEN', $name);
+            $into = (string) $database->fetchValue('SELECT `name` FROM `' . self::TAGS . '` WHERE `tag_id` = ?', [$other]);
+            return [self::mergeTag($sectionId, $tag['tag_id'], $other) ? null : L_('MOD_LISTINGS:ERR_DATABASE'), $into];
         }
         $database->query(
             'UPDATE `' . self::TAGS . '` SET `name` = ?, `slug` = ? WHERE `tag_id` = ? AND `section_id` = ?',
             [$name, $slug, $tag['tag_id'], $sectionId]
         );
-        return $database->hasError() ? L_('MOD_LISTINGS:ERR_DATABASE') : null;
+        return [$database->hasError() ? L_('MOD_LISTINGS:ERR_DATABASE') : null, null];
+    }
+
+    /** The entries of tag $from get tag $into (once), then $from is deleted. */
+    public static function mergeTag(int $sectionId, int $from, int $into): bool
+    {
+        try {
+            $GLOBALS['database']->transaction(function (\Database $db) use ($sectionId, $from, $into) {
+                // portable "insert what is missing": no INSERT IGNORE, no ON CONFLICT
+                $db->query(
+                    'INSERT INTO `' . self::ITEM_TAGS . '` (`section_id`, `item_id`, `tag_id`)
+                     SELECT `section_id`, `item_id`, ? FROM `' . self::ITEM_TAGS . '` f
+                      WHERE f.`tag_id` = ? AND f.`section_id` = ?
+                        AND NOT EXISTS (SELECT 1 FROM `' . self::ITEM_TAGS . '` t WHERE t.`item_id` = f.`item_id` AND t.`tag_id` = ?)',
+                    [$into, $from, $sectionId, $into]
+                );
+                $db->query('DELETE FROM `' . self::ITEM_TAGS . '` WHERE `tag_id` = ? AND `section_id` = ?', [$from, $sectionId]);
+                $db->query('DELETE FROM `' . self::TAGS . '` WHERE `tag_id` = ? AND `section_id` = ?', [$from, $sectionId]);
+                if ($db->hasError()) {
+                    throw new \RuntimeException($db->getError());
+                }
+            });
+        } catch (\Throwable $e) {
+            return false;
+        }
+        return true;
     }
 
     public static function deleteTag(int $sectionId, array $tag): bool

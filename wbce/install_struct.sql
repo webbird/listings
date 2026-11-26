@@ -129,3 +129,18 @@ CREATE TABLE IF NOT EXISTS `{TP}mod_listings_files` (
     KEY `item_field` (`item_id`, `field`, `position`),
     KEY `section_id` (`section_id`)
 ) {TABLE_ENGINE};
+
+-- 1.1: what happened to the entries; no addresses, no message texts
+CREATE TABLE IF NOT EXISTS `{TP}mod_listings_log` (
+    `log_id`     INT NOT NULL AUTO_INCREMENT,
+    `section_id` INT NOT NULL DEFAULT 0,
+    `item_id`    INT NOT NULL DEFAULT 0,
+    `action`     VARCHAR(30) NOT NULL DEFAULT '',
+    `actor`      VARCHAR(10) NOT NULL DEFAULT '',
+    `user_id`    INT NOT NULL DEFAULT 0,
+    `details`    VARCHAR(255) NOT NULL DEFAULT '',
+    `created_at` INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`log_id`),
+    KEY `section_time` (`section_id`, `created_at`),
+    KEY `item_id` (`item_id`)
+) {TABLE_ENGINE};

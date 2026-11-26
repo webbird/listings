@@ -1,6 +1,7 @@
 {# Listings – detail layout
    ITEM: ID, TITLE, URL, CREATED, UPDATED, PUBLISHED, EXPIRES, every public field by name (e.g. ITEM.PHONE),
-         FIELDS (loop of all public fields with a value: NAME, LABEL, TYPE, VALUE; FILES for image, gallery and file:
+         FIELDS (loop of all public fields with a value: NAME, LABEL, TYPE, VALUE (plain text), HTML (rich-text fields);
+         FILES for image, gallery and file:
          URL, THUMB, NAME, SIZE, DOWNLOADS, WIDTH, HEIGHT), RAW (stored values by name),
          IMAGE, THUMB, IMAGE_NAME (the first image), image and file fields also as loops by name (e.g. ITEM.PHOTOS)
    LIST_URL, CONTACT (the contact form to the owner, empty when switched off) #}
@@ -14,6 +15,7 @@
         {foreach ITEM.FIELDS as F}
         <dt>[F.LABEL]</dt>
         <dd>{if F.TYPE == "email"}<a href="mailto:[F.VALUE]">[F.VALUE]</a>{elseif F.TYPE == "url"}<a href="[F.VALUE]" rel="nofollow noopener">[F.VALUE]</a>{elseif F.TYPE == "date"}[F.VALUE|datetime]{elseif F.TYPE == "datetime"}[F.VALUE|datetime:"d.m.Y H:i"]{elseif F.TYPE == "textarea"}[F.VALUE|nl2br]
+            {elseif F.TYPE == "html"}<div class="lst-html">[F.HTML]</div>
             {elseif F.TYPE == "image" or F.TYPE == "gallery"}<span class="lst-images">{foreach F.FILES as P}<a href="[P.URL]"><img src="[P.THUMB]" alt="[P.NAME]" loading="lazy"></a>{/foreach}</span>
             {elseif F.TYPE == "file"}<ul class="lst-downloads">{foreach F.FILES as D}<li><a href="[D.URL]">[D.NAME]</a> <span class="lst-size">([D.SIZE])</span></li>{/foreach}</ul>
             {else}[F.VALUE]{/if}</dd>

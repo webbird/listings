@@ -1,0 +1,29 @@
+{# listings/twig/_log_table.twig – log entries (entries), with links to entries that still exist (existing; null: no title column) #}
+<table class="lst-table lst-log">
+    <thead>
+        <tr>
+            <th scope="col">{{ t('LOG_WHEN') }}</th>
+            {% if existing is not null %}<th scope="col">{{ t('LOG_ENTRY') }}</th>{% endif %}
+            <th scope="col">{{ t('LOG_WHAT') }}</th>
+            <th scope="col">{{ t('LOG_WHO') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for e in entries %}
+        <tr>
+            <td>{{ format_time(e.created_at) }}</td>
+            {% if existing is not null %}
+            <td>
+                {%- if e.item_id == 0 -%}–
+                {%- elseif e.item_id in existing -%}<a href="{{ url({lst_view: 'item', lst_item: e.item_id}) }}">{{ titles[e.item_id]|default(e.details) }}</a>
+                {%- else -%}{{ e.action in ['created', 'confirmed', 'updated', 'deleted', 'reminded'] ? e.details : '#' ~ e.item_id }}{%- endif -%}
+            </td>
+            {% endif %}
+            <td>{{ t('LOG_ACTION_' ~ e.action|upper) }}
+                {%- if e.action == 'status' %}: {{ t('STATUS_' ~ e.details|upper) }}
+                {%- elseif e.action in ['extended', 'imported', 'preset'] %}: {{ e.details }}{% endif %}</td>
+            <td>{{ t('LOG_ACTOR_' ~ e.actor|upper) }}{% if e.display_name != '' %} ({{ e.display_name }}){% endif %}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

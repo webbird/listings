@@ -8,6 +8,7 @@
 {% endblock %}
 {% block content %}
 <p class="lst-hint">{{ t('HINT_FIELDS') }}</p>
+<p class="lst-live" role="status" aria-live="polite" data-lst-live></p>
 
 {% if fields is empty %}
     <p>{{ t('NO_FIELDS') }}</p>
@@ -27,13 +28,13 @@
             <th></th>
         </tr>
     </thead>
-    <tbody>
+    <tbody data-lst-sortable data-lst-sort-form="lst_sort_fields">
     {% for f in fields %}
         {% set key = idkey('field', f.field_id) %}
         {% set edit = url({lst_view: 'field', lst_field: f.field_id}) %}
         {# the inner loop below has a loop variable of its own #}
         {% set moves = {'-1': ['UP', '▲', not loop.first], '1': ['DOWN', '▼', not loop.last]} %}
-        <tr{% if f.type == 'heading' %} class="lst-heading-row"{% endif %}>
+        <tr draggable="true" data-lst-key="{{ loop.index0 }}"{% if f.type == 'heading' %} class="lst-heading-row"{% endif %}>
             <td class="lst-move">
                 {% for dir, move in moves %}
                     {% if move[2] %}
@@ -67,5 +68,13 @@
     {% endfor %}
     </tbody>
 </table>
+{# the new order after dragging goes here by fetch: positions in the list of this page, never IDs #}
+<form id="lst_sort_fields" method="post" action="{{ action }}" hidden data-lst-sorted="{{ t('MSG_ORDER_SAVED') }}">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="field_sort">
+    <input type="hidden" name="lst_fields" value="{{ idkey_list('fields', fields|map(x => x.field_id)) }}">
+    <input type="hidden" name="lst_order" value="">
+</form>
+<p class="lst-help">{{ t('HINT_DRAG') }}</p>
 {% endif %}
 {% endblock %}

@@ -95,4 +95,9 @@
         <a href="{{ url({lst_view: 'items'}) }}">{{ L_('TEXT:CANCEL') }}</a>
     </div>
 </form>
+
+{% if history is not empty %}
+<h4>{{ t('LOG_HISTORY') }}</h4>
+{% include '_log_table.twig' with {entries: history, existing: null} %}
+{% endif %}
 {% endblock %}

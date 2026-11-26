@@ -37,7 +37,7 @@
         <dl class="lst-fields">
             {foreach ITEM.FIELDS as F}
             <dt>[F.LABEL]</dt>
-            <dd>{if F.TYPE == "email"}<a href="mailto:[F.VALUE]">[F.VALUE]</a>{elseif F.TYPE == "url"}<a href="[F.VALUE]" rel="nofollow noopener">[F.VALUE]</a>{elseif F.TYPE == "date"}[F.VALUE|datetime]{elseif F.TYPE == "datetime"}[F.VALUE|datetime:"d.m.Y H:i"]{elseif F.TYPE == "textarea"}[F.VALUE|excerpt:200]{else}[F.VALUE]{/if}</dd>
+            <dd>{if F.TYPE == "email"}<a href="mailto:[F.VALUE]">[F.VALUE]</a>{elseif F.TYPE == "url"}<a href="[F.VALUE]" rel="nofollow noopener">[F.VALUE]</a>{elseif F.TYPE == "date"}[F.VALUE|datetime]{elseif F.TYPE == "datetime"}[F.VALUE|datetime:"d.m.Y H:i"]{elseif F.TYPE == "textarea" or F.TYPE == "html"}[F.VALUE|excerpt:200]{else}[F.VALUE]{/if}</dd>
             {/foreach}
         </dl>
         {/if}

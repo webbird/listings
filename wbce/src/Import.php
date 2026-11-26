@@ -181,6 +181,20 @@ final class Import
         $form = self::formDefinition($settings);
         $report['form_source'] = $form === null ? 'data' : 'forms';
         $fields = self::fieldsFrom($form, $attrs, $items, $text, !empty($options['public_email']));
+        // a long text with markup in any entry becomes an HTML field
+        foreach ($fields as &$f) {
+            if ($f['type'] !== 'textarea') {
+                continue;
+            }
+            foreach ($items as $item) {
+                $value = $f['read']($item, $attrs[(int) $item['item_id']] ?? []);
+                if (is_string($value) && $value !== strip_tags($value)) {
+                    $f['type'] = 'html';
+                    break;
+                }
+            }
+        }
+        unset($f);
 
         // ---- pictures and downloads: one gallery and one file field, if there are any ----
         $sourceFiles = self::sourceFiles($source, $items, $settings, $in, $itemIds);
@@ -311,10 +325,12 @@ final class Import
                 if ($value === null || $value === '' || $value === []) {
                     continue;
                 }
-                if ($f['type'] === 'textarea' && is_string($value) && $value !== strip_tags($value)) {
-                    // Listings has no HTML field yet: the text stays, the markup goes
-                    $value = trim(html_entity_decode(strip_tags(str_replace(['<br>', '<br />', '</p>'], "\n", $value)), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-                    $report['counts']['html']++;
+                if ($f['type'] === 'html' && is_string($value)) {
+                    // the allowed formatting stays, everything else goes
+                    if ($value !== strip_tags($value)) {
+                        $report['counts']['html']++;
+                    }
+                    $value = $value === strip_tags($value) ? nl2br(h($value), false) : Html::clean($value);
                 }
                 $data[$f['name']] = $value;
             }
@@ -380,7 +396,7 @@ final class Import
             }
 
             // images are encoded again like uploads; a file that cannot be read is noted, not fatal
-            $plan = ['new' => [], 'remove' => []];
+            $plan = ['new' => [], 'remove' => [], 'order' => []];
             foreach ($fields as $f) {
                 foreach ($f['files'][$id] ?? [] as $src) {
                     if ($src['path'] === null) {

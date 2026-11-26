@@ -36,6 +36,7 @@ final class Reminders
             }
             // marked either way: a failing mail server must not mean a mail per hour
             Items::markReminded($sectionId, $item['item_id']);
+            Log::add($sectionId, $item['item_id'], 'reminded', 'system', 0, $item['title']);
             Mail::reminder($sectionId, $item, $url);
         }
     }

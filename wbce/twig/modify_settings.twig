@@ -103,6 +103,13 @@
                 <p class="lst-help" id="lst_remind_help">{{ t('HELP_REMIND') }}</p>
             </div>
         </div>
+        <div class="lst-row">
+            <label for="lst_max_per_owner">{{ t('MAX_PER_OWNER') }}</label>
+            <div>
+                <input type="number" id="lst_max_per_owner" name="max_per_owner" min="0" max="{{ max_per_owner_limit }}" value="{{ form.max_per_owner|default('0') }}" aria-describedby="lst_max_per_owner_help">
+                <p class="lst-help" id="lst_max_per_owner_help">{{ t('HELP_MAX_PER_OWNER') }}</p>
+            </div>
+        </div>
     </fieldset>
 
     <fieldset>

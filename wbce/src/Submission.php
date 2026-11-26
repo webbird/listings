@@ -109,10 +109,13 @@ final class Submission
         if ($old['privacy'] !== '1') {
             $errors[] = L_('MOD_LISTINGS:ERR_PRIVACY');
         }
+        if ($errors === [] && $this->limitReached($account ? '' : $values['owner_email'], $account ? $this->user['id'] : 0, 0)) {
+            $errors[] = L_('MOD_LISTINGS:ERR_OWNER_LIMIT', Settings::maxPerOwner($this->settings));
+        }
         if (!$account && $errors === [] && Tokens::recentCount($this->sectionId, $values['owner_email']) >= Tokens::MAX_PER_HOUR) {
             $errors[] = L_('MOD_LISTINGS:ERR_TOO_MANY');
         }
-        $files = ['new' => [], 'remove' => []];
+        $files = ['new' => [], 'remove' => [], 'order' => []];
         if ($errors === []) {
             [$files, $errors] = Files::check($this->sectionId, $fields, null, $_FILES['uploads'] ?? null, null);
         }
@@ -134,6 +137,7 @@ final class Submission
             if ($itemId === null || !Files::store($this->sectionId, $itemId, $files) || !$this->assign($itemId)) {
                 $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $formUrl, $old);
             }
+            Log::add($this->sectionId, $itemId, 'created', 'owner', $this->user['id'], $values['title']);
             $saved = ['item_id' => $itemId] + $values;
             $this->succeed(
                 L_($approval ? 'MOD_LISTINGS:MSG_ACCOUNT_WAITING' : 'MOD_LISTINGS:MSG_ACCOUNT_PUBLISHED'),
@@ -151,6 +155,7 @@ final class Submission
         if ($token === null) {
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $formUrl, $old);
         }
+        Log::add($this->sectionId, $itemId, 'created', 'owner', 0, $values['title']);
         $email = $values['owner_email'];
         $this->succeed(L_('MOD_LISTINGS:MSG_CHECK_MAIL'), $this->pageUrl, static fn () => Mail::confirm($sectionId, $email, $token));
     }
@@ -162,11 +167,16 @@ final class Submission
         if ($item === null || $item['status'] !== 'draft') {
             $this->fail([L_('MOD_LISTINGS:LINK_INVALID')], $this->pageUrl);
         }
+        // the limit counts confirmed entries: unconfirmed ones could be typed in by anybody
+        if ($this->limitReached($item['owner_email'], 0, $item['item_id'])) {
+            $this->fail([L_('MOD_LISTINGS:ERR_OWNER_LIMIT', Settings::maxPerOwner($this->settings))], $this->pageUrl);
+        }
         $approval = Settings::on($this->settings, 'approval');
         $status = $approval ? 'pending' : 'published';
         if (!Items::setStatus($this->sectionId, $item['item_id'], $status) || !Tokens::markUsed($token['token_id'])) {
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $this->pageUrl);
         }
+        Log::add($this->sectionId, $item['item_id'], 'confirmed', 'owner', 0, $item['title']);
         $sectionId = $this->sectionId;
         $this->succeed(
             L_($approval ? 'MOD_LISTINGS:MSG_CONFIRMED_WAITING' : 'MOD_LISTINGS:MSG_CONFIRMED_PUBLISHED'),
@@ -215,9 +225,9 @@ final class Submission
             'expires' => $item['expires_at'] > 0 ? date('Y-m-d', $item['expires_at']) : '',
             'fields'  => $old['fields'],
         ], $item);
-        $files = ['new' => [], 'remove' => []];
+        $files = ['new' => [], 'remove' => [], 'order' => []];
         if ($errors === []) {
-            [$files, $errors] = Files::check($this->sectionId, $fields, $item['item_id'], $_FILES['uploads'] ?? null, $_POST['files_remove'] ?? null);
+            [$files, $errors] = Files::check($this->sectionId, $fields, $item['item_id'], $_FILES['uploads'] ?? null, $_POST['files_remove'] ?? null, $_POST['files_order'] ?? null);
         }
         if ($errors !== []) {
             $this->fail($errors, $editUrl, $old);
@@ -243,6 +253,7 @@ final class Submission
         if (!Files::store($this->sectionId, $item['item_id'], $files) || !$this->assign($item['item_id'])) {
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $editUrl, $old);
         }
+        Log::add($this->sectionId, $item['item_id'], 'updated', 'owner', (int) ($this->user['id'] ?? 0), $values['title']);
         $nowWaiting = $status === 'pending' && $item['status'] !== 'pending';
         $sectionId = $this->sectionId;
         $saved = ['owner_email' => $values['owner_email'] ?? $item['owner_email'], 'item_id' => $item['item_id']] + $values;
@@ -266,6 +277,7 @@ final class Submission
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $backUrl);
         }
         $until = Items::find($this->sectionId, $item['item_id'])['expires_at'] ?? 0;
+        Log::add($this->sectionId, $item['item_id'], 'extended', 'owner', (int) ($this->user['id'] ?? 0), date('Y-m-d', $until));
         $this->succeed(L_('MOD_LISTINGS:MSG_EXTENDED', date('d.m.Y', $until)), $backUrl);
     }
 
@@ -275,6 +287,7 @@ final class Submission
         if (!Items::delete($this->sectionId, $item['item_id'])) {
             $this->fail([L_('MOD_LISTINGS:ERR_DATABASE')], $this->pageUrl);
         }
+        Log::add($this->sectionId, $item['item_id'], 'deleted', 'owner', (int) ($this->user['id'] ?? 0), $item['title']);
         $this->succeed(
             L_('MOD_LISTINGS:MSG_DELETED'),
             $item['owner_user_id'] > 0 && $this->user !== null ? View::formUrl($this->pageUrl, $this->sectionId, 'mine') : $this->pageUrl
@@ -321,6 +334,8 @@ final class Submission
         }
         $sent[] = time();
         $_SESSION['mod_listings_contact'] = array_values($sent);
+        // that a message was sent, never who sent it or what it says
+        Log::add($this->sectionId, $item['item_id'], 'contact', 'visitor', (int) ($this->user['id'] ?? 0));
         unset($_SESSION['mod_listings_form_time'][$this->sectionId]);
 
         $sectionId = $this->sectionId;
@@ -357,6 +372,16 @@ final class Submission
             $this->fail([L_('MOD_LISTINGS:ERR_NOT_YOURS')], View::formUrl($this->pageUrl, $this->sectionId, 'mine'));
         }
         return [$item, View::ownerEditUrl($this->pageUrl, $this->sectionId, $item['item_id'])];
+    }
+
+    /**
+     * The owner (address or account) has as many entries as the directory
+     * allows; unconfirmed drafts and $exceptId do not count.
+     */
+    private function limitReached(string $email, int $userId, int $exceptId): bool
+    {
+        $max = Settings::maxPerOwner($this->settings);
+        return $max > 0 && Items::countOwned($this->sectionId, $email, $userId, $exceptId) >= $max;
     }
 
     /** Categories and tags as sent, for the form after an error. */

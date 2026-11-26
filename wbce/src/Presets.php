@@ -34,7 +34,7 @@ final class Presets
     public const MAX_BYTES = 1048576;
 
     /** Not part of a preset: a personal address and internal state. */
-    private const SETTINGS_NOT_EXPORTED = ['notify_email', 'reminder_run', 'layout_list', 'layout_detail'];
+    private const SETTINGS_NOT_EXPORTED = ['notify_email', 'reminder_run', 'layout_list', 'layout_detail', 'mails', 'form_intro'];
 
     private const MAX_FIELDS = 100;
     private const MAX_CATEGORIES = 500;
@@ -142,7 +142,7 @@ final class Presets
         $settings = [];
         foreach (array_diff_key($all, array_flip(self::SETTINGS_NOT_EXPORTED)) as $key => $value) {
             $settings[$key] = in_array($key, Settings::FLAGS, true) ? $value === '1'
-                : (in_array($key, ['per_page', 'runtime_days', 'remind_days'], true) ? (int) $value : $value);
+                : (in_array($key, ['per_page', 'runtime_days', 'remind_days', 'max_per_owner'], true) ? (int) $value : $value);
         }
 
         $tree = Taxonomy::categories($sectionId);
@@ -187,6 +187,14 @@ final class Presets
             if (trim($all['layout_' . $layout]) !== '') {
                 $preset['layouts'][$layout] = $all['layout_' . $layout];
             }
+        }
+        // the directory's own texts: above the form, and mail templates that differ from the defaults
+        if ($all['form_intro'] !== '') {
+            $preset['layouts']['form_intro'] = $all['form_intro'];
+        }
+        $mails = json_decode($all['mails'], true);
+        if (is_array($mails) && $mails !== []) {
+            $preset['mails'] = $mails;
         }
         return $preset;
     }
@@ -281,6 +289,20 @@ final class Presets
         foreach (Layouts::NAMES as $layout) {
             $text = $preset['layouts'][$layout] ?? '';
             $values['layout_' . $layout] = is_string($text) ? Layouts::normalise($layout, $text) : '';
+        }
+        $intro = $preset['layouts']['form_intro'] ?? '';
+        $values['form_intro'] = is_string($intro) ? mb_substr(trim(str_replace(["\r\n", "\r"], "\n", $intro)), 0, Settings::FORM_INTRO_MAX) : '';
+        // mail templates through the same check as the layouts form
+        $input = [];
+        foreach (is_array($preset['mails'] ?? null) ? $preset['mails'] : [] as $kind => $mail) {
+            if (is_string($kind) && is_array($mail)) {
+                $input['mail_' . $kind . '_subject'] = self::text($mail['subject'] ?? '');
+                $input['mail_' . $kind . '_text'] = self::text($mail['text'] ?? '');
+            }
+        }
+        [$values['mails'], $mailErrors] = Mail::checkTemplates($input, Mail::language($sectionId));
+        if ($mailErrors !== []) {
+            return $mailErrors;
         }
         $error = Settings::save($sectionId, $values);
         if ($error !== null) {

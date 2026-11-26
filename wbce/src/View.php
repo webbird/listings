@@ -196,6 +196,7 @@ final class View
             'files'    => [],
             'values'   => $old ?? [],
             'approval' => Settings::on($settings, 'approval'),
+            'form_intro' => $settings['form_intro'] ?? '',
         ]);
     }
 
@@ -254,7 +255,7 @@ final class View
             if ($item !== null) {
                 \I::insertTitle($item['title'] . ' - ' . WEBSITE_TITLE);
                 // the contact form is HTML rendered here; the editable layout only places it
-                $parser->setRawKeys(['CONTACT']);
+                $parser->setRawKeys(array_merge(['CONTACT'], self::rawKeys($fields)));
                 $tax = Taxonomy::forItems($sectionId, [$item['item_id']])[$item['item_id']];
                 $files = Files::forItem($sectionId, $item['item_id']);
                 return $parser->parse(Layouts::get($settings, 'detail'), [
@@ -297,7 +298,7 @@ final class View
             }
         }
         // the filter form is HTML rendered here; the editable layout only places it
-        $parser->setRawKeys(['FILTER']);
+        $parser->setRawKeys(array_merge(['FILTER'], self::rawKeys($fields)));
         return $parser->parse(Layouts::get($settings, 'list'), [
             'ITEMS'      => array_map(static fn ($i) => self::itemData($i, $fields, $baseUrl, true, $taxonomy[$i['item_id']], $tagsOn, $sectionId, $files[$i['item_id']] ?? []), $items),
             'COUNT'      => $total,
@@ -319,6 +320,54 @@ final class View
             'LIST_URL'   => $baseUrl,
             'SECTION_ID' => $sectionId,
         ]);
+    }
+
+    /**
+     * The list, the first visible entry or the form for new entries as
+     * visitors would see them with $settings (unsaved layouts), for the
+     * preview in the backend.
+     */
+    public static function preview(int $sectionId, int $pageId, string $what, array $settings): string
+    {
+        $baseUrl = page_link($pageId);
+        $frontend = Settings::on($settings, 'frontend');
+        $get = $_GET;
+        $_GET = [];
+        try {
+            if ($what === 'form') {
+                return self::template('form', self::taxonomyVars($sectionId, $settings) + [
+                    'section_id'    => $sectionId,
+                    'action'        => '#',
+                    'upload_action' => '#',
+                    'max_post'      => Files::maxPostBytes(),
+                    'max_post_text' => Files::formatSize(Files::maxPostBytes()),
+                    'list_url'      => $baseUrl,
+                    'link_url'      => $baseUrl,
+                    'errors'        => [],
+                    'success'       => '',
+                    'account'       => Settings::accountMode($settings),
+                    'captcha'       => '',
+                    'mode'          => 'new',
+                    'token'         => '',
+                    'item'          => null,
+                    'fields'        => Files::withLimits(Fields::forOwner(Fields::forSection($sectionId))),
+                    'files'         => [],
+                    'values'        => [],
+                    'approval'      => Settings::on($settings, 'approval'),
+                    'form_intro'    => $settings['form_intro'] ?? '',
+                ]);
+            }
+            if ($what === 'detail') {
+                $first = Items::list($sectionId, null, true, Settings::orderBy($settings), 1, 0);
+                if ($first === []) {
+                    return self::template('message', ['text' => L_('MOD_LISTINGS:PREVIEW_NO_ENTRY'), 'type' => 'error']);
+                }
+                $_GET[self::PARAM_ITEM] = $first[0]['slug'];
+            }
+            return self::publicView($sectionId, $pageId, $settings, $baseUrl, $frontend, []);
+        } finally {
+            $_GET = $get;
+        }
     }
 
     public static function rssUrl(int $sectionId): string
@@ -374,7 +423,7 @@ final class View
             // the words are looked for in the title and in public text fields only
             $result['items']['q_fields'] = array_column(array_filter(
                 $fields,
-                static fn ($f) => in_array($f['type'], ['text', 'textarea', 'select', 'radio', 'url'], true)
+                static fn ($f) => in_array($f['type'], ['text', 'textarea', 'html', 'select', 'radio', 'url'], true)
             ), 'name');
             $result['query']['q'] = $q;
         }
@@ -486,12 +535,18 @@ final class View
             $key = strtoupper($field['name']);
             $data[$key] = $display;
             $data['RAW'][$key] = $raw;
+            // HTML fields: the reduced HTML, printed raw (see rawKeys()); VALUE stays the plain text
+            $html = $field['type'] === 'html' && is_string($raw) ? $raw : '';
+            if ($field['type'] === 'html') {
+                $data[$key . '_HTML'] = $html;
+            }
             if ($display !== '' && (!$listOnly || $field['in_list'])) {
                 $data['FIELDS'][] = [
                     'NAME'  => $field['name'],
                     'LABEL' => $field['label'],
                     'TYPE'  => $field['type'],
                     'VALUE' => $display,
+                    'HTML'  => $html,
                     'FILES' => [],
                 ];
             }
@@ -508,6 +563,24 @@ final class View
             $data['TAGS'][] = ['NAME' => $tag['name'], 'URL' => self::filterUrl($baseUrl, $sectionId, 't', $tag['slug'])];
         }
         return $data;
+    }
+
+    /**
+     * Keys printed without escaping: the HTML of rich-text fields, which
+     * Html::clean() reduced to the allowed tags when it was saved.
+     *
+     * @param list<array<string, mixed>> $fields
+     * @return list<string>
+     */
+    public static function rawKeys(array $fields): array
+    {
+        $keys = ['*.HTML'];
+        foreach ($fields as $field) {
+            if ($field['type'] === 'html') {
+                $keys[] = '*.' . strtoupper($field['name']) . '_HTML';
+            }
+        }
+        return $keys;
     }
 
     public static function itemUrl(string $baseUrl, string $slug): string

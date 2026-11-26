@@ -50,3 +50,15 @@
 .mod_listings .lst-files--images li { display: flex; flex-direction: column; gap: .2em; }
 .mod_listings .lst-files img { display: block; width: 7em; height: 7em; object-fit: cover; border-radius: 3px; }
 .mod_listings .lst-file-remove { font-size: .875em; font-weight: 400; }
+/* 1.1: sorting, the small HTML editor */
+.mod_listings [draggable="true"] { cursor: grab; }
+.mod_listings .lst-dragging { opacity: .5; }
+.mod_listings .lst-sort-buttons { display: flex; gap: .25em; }
+.mod_listings .lst-sort-buttons button { padding: 0 .3em; border: 0; background: none; cursor: pointer; }
+.mod_listings .lst-html-editor { max-width: 36em; border: 1px solid rgba(0, 0, 0, .25); border-radius: 3px; }
+.mod_listings .lst-html-editor textarea { width: 100%; box-sizing: border-box; border: 0; }
+.mod_listings .lst-html-toolbar { display: flex; gap: .25em; padding: .25em; border-bottom: 1px solid rgba(0, 0, 0, .15); background: rgba(0, 0, 0, .03); }
+.mod_listings .lst-html-toolbar button { min-width: 2em; padding: .15em .4em; border: 1px solid transparent; border-radius: 3px; background: none; cursor: pointer; }
+.mod_listings .lst-html-toolbar button:hover, .mod_listings .lst-html-toolbar button:focus { border-color: rgba(0, 0, 0, .3); }
+.mod_listings .lst-html-area { min-height: 8em; padding: .5em .75em; outline-offset: -2px; }
+.mod_listings .lst-html-area p, .mod_listings .lst-html p { margin: 0 0 .6em; }

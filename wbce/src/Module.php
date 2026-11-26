@@ -51,6 +51,8 @@ final class Module
         $twig->addFunction(new \Twig\TwigFunction('t', self::t(...)));
         $twig->addFunction(new \Twig\TwigFunction('format_time', self::formatTime(...)));
         $twig->addFunction(new \Twig\TwigFunction('maxlength', FieldTypes::maxLength(...)));
+        // the value of an HTML field as the editors may show it: reduced to the allowed tags
+        $twig->addFunction(new \Twig\TwigFunction('clean_html', static fn (mixed $v): string => is_string($v) ? Html::clean($v) : ''));
         foreach ($functions as $name => $function) {
             $twig->addFunction(new \Twig\TwigFunction($name, $function));
         }
@@ -140,13 +142,81 @@ final class Module
         return $form->getIDKEY('listings_' . $purpose . ':' . $id);
     }
 
-    /** The ID behind an IDKEY in $_POST[$field], or 0 when it is unknown, expired or for another purpose. */
-    public static function checkId(\SecureForm $form, string $field, string $purpose): int
+    /**
+     * A request by a script (fetch, XHR, htmx). Uses BackendAjax where the
+     * core has it; some 1.7 builds do not yet.
+     */
+    public static function isAjax(): bool
+    {
+        if (class_exists('BackendAjax')) {
+            return \BackendAjax::isAjax();
+        }
+        $with = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+        return in_array($with, ['fetch', 'xmlhttprequest'], true)
+            || isset($_SERVER['HTTP_HX_REQUEST'])
+            || str_contains(strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? '')), 'application/json');
+    }
+
+    /** A script request with an expired form or key: 403 and JSON instead of an error page. */
+    public static function denyAjaxToken(): void
+    {
+        if (class_exists('BackendAjax')) {
+            \BackendAjax::denyIfAjax(\BackendAjax::TOKEN_EXPIRED);
+            return;
+        }
+        if (!self::isAjax()) {
+            return;
+        }
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => false, 'reason' => 'token_expired', 'message' => L_('MOD_LISTINGS:ERR_EXPIRED_FORM')], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /**
+     * One key for all IDs a page lists (bulk actions, sorting): the form
+     * then names positions in this list, never IDs.
+     *
+     * @param list<int> $ids
+     */
+    public static function idKeyList(\SecureForm $form, string $purpose, array $ids): string
+    {
+        return $form->getIDKEY('listings_' . $purpose . ':' . implode(',', array_map('intval', $ids)));
+    }
+
+    /**
+     * The IDs behind an idKeyList(), by position; [] when unknown or expired.
+     * $peek keeps the key valid for more requests of the same page.
+     *
+     * @return list<int>
+     */
+    public static function checkIdList(\SecureForm $form, string $field, string $purpose, bool $peek = false): array
+    {
+        if (!is_string($_POST[$field] ?? null)) {
+            return [];
+        }
+        $value = $form->checkIDKEY($field, '', 'POST', $peek);
+        $prefix = 'listings_' . $purpose . ':';
+        if (!is_string($value) || !str_starts_with($value, $prefix)) {
+            return [];
+        }
+        $list = substr($value, strlen($prefix));
+        return $list === '' ? [] : array_map('intval', explode(',', $list));
+    }
+
+    /**
+     * The ID behind an IDKEY in $_POST[$field], or 0 when it is unknown, expired or for another purpose.
+     * $peek (for fetch requests) keeps the key and those of the same page valid.
+     */
+    public static function checkId(\SecureForm $form, string $field, string $purpose, bool $peek = false): int
     {
         if (!is_string($_POST[$field] ?? null)) {
             return 0;
         }
-        $value = $form->checkIDKEY($field, '', 'POST');
+        $value = $form->checkIDKEY($field, '', 'POST', $peek);
         $prefix = 'listings_' . $purpose . ':';
         return is_string($value) && str_starts_with($value, $prefix) ? (int) substr($value, strlen($prefix)) : 0;
     }
@@ -167,7 +237,7 @@ final class Module
     {
         global $database;
         Files::deleteSection($sectionId);
-        foreach (['files', 'item_tags', 'tags', 'item_categories', 'categories', 'tokens', 'items', 'fields', 'settings'] as $table) {
+        foreach (['log', 'files', 'item_tags', 'tags', 'item_categories', 'categories', 'tokens', 'items', 'fields', 'settings'] as $table) {
             $database->deleteRow('{TP}mod_listings_' . $table, 'section_id', $sectionId);
             if ($database->hasError()) {
                 trigger_error('Listings: ' . $database->getError(), E_USER_WARNING);

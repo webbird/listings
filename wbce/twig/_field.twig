@@ -14,24 +14,52 @@
     {% set stored = files|default([]) %}
     {% set upload = f.upload|default({}) %}
     {% if stored is not empty %}
-    <ul class="lst-files{{ f.type != 'file' ? ' lst-files--images' }}">
+    {# several files can be put in order by dragging, or with the arrow buttons #}
+    {% set sortable = stored|length > 1 %}
+    <ul class="lst-files{{ f.type != 'file' ? ' lst-files--images' }}"{% if sortable %} data-lst-sortable="lst_order_{{ f.name }}"{% endif %}>
         {% for file in stored %}
-        <li>
+        <li{% if sortable %} draggable="true" data-lst-key="{{ file.file_key }}"{% endif %}>
+            {% if sortable %}
+            <span class="lst-sort-buttons">
+                <button type="button" class="lst-link-button" data-lst-move="-1" title="{{ t('MOVE_UP') }}" aria-label="{{ t('MOVE_UP') }}: {{ file.filename }}">◀</button>
+                <button type="button" class="lst-link-button" data-lst-move="1" title="{{ t('MOVE_DOWN') }}" aria-label="{{ t('MOVE_DOWN') }}: {{ file.filename }}">▶</button>
+            </span>
+            {% endif %}
             {% if file.kind == 'image' %}
                 <a href="{{ file.url }}" target="_blank" rel="noopener"><img src="{{ file.thumb_url }}" alt="{{ file.filename }}" loading="lazy"></a>
             {% else %}
                 <a href="{{ file.url }}">{{ file.filename }}</a> <span class="lst-help">({{ file.size_text }})</span>
             {% endif %}
-            <label class="lst-file-remove"><input type="checkbox" name="files_remove[]" value="{{ file.file_id }}"> {{ t('FILE_REMOVE') }}</label>
+            <label class="lst-file-remove"><input type="checkbox" name="files_remove[]" value="{{ file.file_key }}"> {{ t('FILE_REMOVE') }}</label>
         </li>
         {% endfor %}
     </ul>
+    {% if sortable %}<input type="hidden" id="lst_order_{{ f.name }}" name="files_order[{{ f.name }}]" value="{{ stored|map(x => x.file_key)|join(',') }}">{% endif %}
     {% endif %}
     <input type="file" name="uploads[{{ f.name }}][]" id="{{ id }}" accept="{{ upload.accept }}"
         {%- if f.type != 'image' %} multiple{% endif %}
         {%- if f.required and stored is empty %} required{% endif %}
         data-lst-max-bytes="{{ upload.max_bytes }}" data-lst-too-big="{{ t('ERR_FILE_SIZE', '%name%', upload.max_text) }}">
     <p class="lst-help">{{ f.type == 'image' and stored is not empty ? t('HELP_IMAGE_REPLACE') ~ ' ' }}{{ t(f.type == 'file' ? 'HELP_FILE_LIMITS' : (f.type == 'image' ? 'HELP_ONE_IMAGE' : 'HELP_IMAGE_LIMITS'), upload.max_files, upload.max_text, upload.extensions) }}</p>
+{% elseif f.type == 'html' %}
+    {# backend: the editor of the site (f.editor); frontend: a small editor of the module over the textarea.
+       The value is cleaned again on saving, whatever the editor sends. #}
+    {% if f.editor|default('') != '' %}
+        {{ f.editor|raw }}
+    {% else %}
+    <div class="lst-html-editor" data-lst-html>
+        <div class="lst-html-toolbar" role="toolbar" aria-label="{{ f.label }}" hidden>
+            <button type="button" data-cmd="bold" title="{{ t('HTML_BOLD') }}" aria-label="{{ t('HTML_BOLD') }}"><strong>B</strong></button>
+            <button type="button" data-cmd="italic" title="{{ t('HTML_ITALIC') }}" aria-label="{{ t('HTML_ITALIC') }}"><em>I</em></button>
+            <button type="button" data-cmd="insertUnorderedList" title="{{ t('HTML_LIST') }}" aria-label="{{ t('HTML_LIST') }}">•</button>
+            <button type="button" data-cmd="insertOrderedList" title="{{ t('HTML_NUMBERED') }}" aria-label="{{ t('HTML_NUMBERED') }}">1.</button>
+            <button type="button" data-cmd="createLink" data-prompt="{{ t('HTML_LINK_PROMPT') }}" title="{{ t('HTML_LINK') }}" aria-label="{{ t('HTML_LINK') }}">🔗</button>
+            <button type="button" data-cmd="unlink" title="{{ t('HTML_UNLINK') }}" aria-label="{{ t('HTML_UNLINK') }}">⛓︎̸</button>
+        </div>
+        <div class="lst-html-area" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="{{ id }}_label" hidden></div>
+        <textarea name="{{ name }}" id="{{ id }}" rows="8"{% if f.required %} required{% endif %}>{{ clean_html(text) }}</textarea>
+    </div>
+    {% endif %}
 {% elseif f.type == 'textarea' %}
     <textarea name="{{ name }}" id="{{ id }}" rows="6" maxlength="{{ maxlength(f) }}"{% if f.required %} required{% endif %}>{{ text }}</textarea>
 {% elseif f.type == 'number' %}

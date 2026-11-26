@@ -78,3 +78,24 @@
 .lst-backend .lst-files--images li { display: flex; flex-direction: column; gap: .2em; }
 .lst-backend .lst-files img { display: block; width: 7em; height: 7em; object-fit: cover; border: 1px solid #ddd; border-radius: 3px; }
 .lst-backend .lst-file-remove { font-size: .875em; }
+/* 1.1: bulk actions, sorting, log, HTML editor, mail templates */
+.lst-backend .lst-pick { width: 1.5em; }
+.lst-backend .lst-bulk { display: flex; flex-wrap: wrap; gap: .5em; align-items: center; margin: .75em 0; }
+.lst-backend .lst-live:empty { display: none; }
+.lst-backend .lst-live { margin: .5em 0; padding: .4em .75em; border-left: 3px solid #3a8a4a; background: rgba(58, 138, 74, .08); }
+.lst-backend [draggable="true"] { cursor: grab; }
+.lst-backend .lst-dragging { opacity: .5; }
+.lst-backend .lst-sort-buttons { display: flex; gap: .25em; }
+.lst-backend .lst-sort-buttons button { padding: 0 .3em; }
+.lst-backend .lst-log td { vertical-align: top; }
+.lst-backend .lst-html-editor { border: 1px solid #ccc; border-radius: 3px; }
+.lst-backend .lst-html-editor textarea { width: 100%; box-sizing: border-box; border: 0; }
+.lst-backend .lst-html-toolbar { display: flex; gap: .25em; padding: .25em; border-bottom: 1px solid #ddd; background: #f6f6f6; }
+.lst-backend .lst-html-area { min-height: 8em; padding: .5em .75em; background: #fff; }
+.lst-backend .lst-mail { margin: 0 0 .5em; padding: .4em .75em; border: 1px solid #ddd; border-radius: 3px; }
+.lst-backend .lst-mail summary { cursor: pointer; font-weight: 600; }
+.lst-backend .lst-mail-preview { white-space: pre-wrap; padding: .75em; background: #f6f6f6; border: 1px solid #ddd; font-size: .9em; }
+.lst-preview-dialog { width: min(70rem, 95vw); height: 85vh; padding: 0; border: 1px solid #999; border-radius: 4px; }
+.lst-preview-dialog::backdrop { background: rgba(0, 0, 0, .4); }
+.lst-preview-dialog .lst-preview-bar { display: flex; justify-content: space-between; align-items: center; padding: .4em .75em; background: #f2f2f2; border-bottom: 1px solid #ddd; }
+.lst-preview-dialog iframe { width: 100%; height: calc(100% - 3em); border: 0; }

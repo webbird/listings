@@ -245,14 +245,17 @@ final class Files
      *
      * @param list<array<string, mixed>> $fields the fields the sender may edit
      * @param array<string, mixed>|null $uploads $_FILES['uploads']
-     * @param mixed $remove $_POST['files_remove']: file IDs to delete
-     * @return array{0: array{new: list<array<string, mixed>>, remove: list<int>}, 1: list<string>}
+     * The form names stored files by their key (as in their URL), never by ID.
+     *
+     * @param mixed $remove $_POST['files_remove']: keys of files to delete
+     * @param mixed $order $_POST['files_order']: per field the keys in the new order, comma separated
+     * @return array{0: array{new: list<array<string, mixed>>, remove: list<int>, order: array<int, int>}, 1: list<string>}
      */
-    public static function check(int $sectionId, array $fields, ?int $itemId, ?array $uploads, mixed $remove): array
+    public static function check(int $sectionId, array $fields, ?int $itemId, ?array $uploads, mixed $remove, mixed $order = null): array
     {
         $existing = $itemId === null ? [] : self::forItem($sectionId, $itemId);
-        $removeIds = is_array($remove) ? array_map('intval', array_filter($remove, 'is_string')) : [];
-        $plan = ['new' => [], 'remove' => []];
+        $removeKeys = is_array($remove) ? array_values(array_filter($remove, static fn ($k) => is_string($k) && preg_match('/^[a-f0-9]{32}$/', $k) === 1)) : [];
+        $plan = ['new' => [], 'remove' => [], 'order' => []];
         $errors = [];
 
         foreach ($fields as $field) {
@@ -263,8 +266,28 @@ final class Files
             $current = $existing[$field['name']] ?? [];
             $sent = self::uploadsOf($uploads, $field['name']);
 
+            // the new order: keys of this entry and field only, the others keep their place behind them
+            $wanted = is_array($order) && is_string($order[$field['name']] ?? null) ? explode(',', $order[$field['name']]) : [];
+            $byKey = array_column($current, null, 'file_key');
+            $sorted = [];
+            foreach ($wanted as $key) {
+                if (isset($byKey[$key]) && !in_array($byKey[$key], $sorted, true)) {
+                    $sorted[] = $byKey[$key];
+                }
+            }
+            foreach ($current as $file) {
+                if (!in_array($file, $sorted, true)) {
+                    $sorted[] = $file;
+                }
+            }
+            foreach ($sorted as $position => $file) {
+                if ($file['position'] !== $position + 1) {
+                    $plan['order'][$file['file_id']] = $position + 1;
+                }
+            }
+
             // only files of this entry and field can be removed
-            $gone = array_values(array_filter($current, static fn ($f) => in_array($f['file_id'], $removeIds, true)));
+            $gone = array_values(array_filter($current, static fn ($f) => in_array($f['file_key'], $removeKeys, true)));
             // a single image is replaced by a new one
             if ($field['type'] === 'image' && $sent !== []) {
                 $gone = $current;
@@ -310,16 +333,23 @@ final class Files
 
         if ($errors !== []) {
             self::discard($plan);
-            return [['new' => [], 'remove' => []], $errors];
+            return [['new' => [], 'remove' => [], 'order' => []], $errors];
         }
         return [$plan, []];
     }
 
-    /** Records the prepared files of an entry and deletes the removed ones. */
+    /** Records the prepared files of an entry, applies the new order and deletes the removed ones. */
     public static function store(int $sectionId, int $itemId, array $plan): bool
     {
         global $database;
         $ok = true;
+        foreach ($plan['order'] ?? [] as $fileId => $position) {
+            $database->query(
+                'UPDATE `' . self::TABLE . '` SET `position` = ? WHERE `file_id` = ? AND `item_id` = ? AND `section_id` = ?',
+                [$position, $fileId, $itemId, $sectionId]
+            );
+            $ok = !$database->hasError() && $ok;
+        }
         foreach ($plan['new'] as $file) {
             $position = (int) $database->fetchValue(
                 'SELECT MAX(`position`) FROM `' . self::TABLE . '` WHERE `item_id` = ? AND `field` = ?',

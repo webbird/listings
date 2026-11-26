@@ -1,5 +1,6 @@
 {#
-    listings/twig/modify_layouts.twig – the list and detail layouts (LayoutParser, editable by the admin)
+    listings/twig/modify_layouts.twig – list and detail layouts (LayoutParser), the text above the form
+    for new entries and the mail templates; each with a preview
 #}
 {% extends 'modify.twig' %}
 {% block content %}
@@ -7,9 +8,11 @@
 {% if field_keys is not empty %}
     <p class="lst-help">{{ t('LAYOUT_FIELD_KEYS') }} {% for key in field_keys %}<code>[ITEM.{{ key }}]</code> {% endfor %}</p>
 {% endif %}
-<form method="post" action="{{ action }}" class="lst-form">
+<form method="post" action="{{ action }}" class="lst-form" id="lst_layouts_form">
     {% include '_hidden.twig' %}
     <input type="hidden" name="lst_action" value="layouts_save">
+    {# Enter in a field submits with the first button: saving, not a preview #}
+    <button type="submit" hidden tabindex="-1" aria-hidden="true">{{ L_('TEXT:SAVE') }}</button>
     {% for name, layout in layouts %}
     <fieldset>
         <legend>
@@ -20,8 +23,50 @@
         {% if custom[name] %}
             <label><input type="checkbox" name="reset_{{ name }}" value="1"> {{ t('LAYOUT_RESET') }}</label>
         {% endif %}
+        {# the preview sends this form to a new window; nothing is saved #}
+        <p><button type="submit" name="lst_preview" value="{{ name }}" formtarget="lst_preview" class="lst-button">{{ t('PREVIEW') }}</button></p>
     </fieldset>
     {% endfor %}
+
+    <fieldset>
+        <legend>{{ t('LAYOUT_FORM') }}</legend>
+        <label for="lst_form_intro">{{ t('FORM_INTRO') }}</label>
+        <textarea id="lst_form_intro" name="form_intro" rows="3" maxlength="{{ form_intro_max }}" aria-describedby="lst_form_intro_help">{{ form_intro }}</textarea>
+        <p class="lst-help" id="lst_form_intro_help">{{ t('HELP_FORM_INTRO') }}</p>
+        <p><button type="submit" name="lst_preview" value="form" formtarget="lst_preview" class="lst-button">{{ t('PREVIEW') }}</button></p>
+    </fieldset>
+
+    <fieldset>
+        <legend>{{ t('LAYOUT_MAILS') }}</legend>
+        <p class="lst-help">{{ t('HELP_MAILS') }}</p>
+        {% for kind, m in mails %}
+        <details class="lst-mail" data-lst-mail data-sample="{{ m.sample|json_encode }}">
+            <summary>
+                {{ t('MAIL_KIND_' ~ kind|upper) }}
+                <span class="lst-badge">{{ t(m.custom ? 'LAYOUT_CUSTOM' : 'LAYOUT_DEFAULT') }}</span>
+            </summary>
+            <div class="lst-row">
+                <label for="lst_mail_{{ kind }}_subject">{{ t('MAIL_SUBJECT') }}</label>
+                <div><input type="text" id="lst_mail_{{ kind }}_subject" name="mail_{{ kind }}_subject" maxlength="200" value="{{ m.subject }}"></div>
+            </div>
+            <div class="lst-row">
+                <label for="lst_mail_{{ kind }}_text">{{ t('MAIL_TEXT') }}</label>
+                <div>
+                    <textarea id="lst_mail_{{ kind }}_text" name="mail_{{ kind }}_text" rows="9" maxlength="5000">{{ m.text }}</textarea>
+                    <p class="lst-help">{{ t('MAIL_PLACEHOLDERS') }}
+                        {% for p in m.placeholders %}<code>{{ p }}</code>{{ p in m.required ? '*' }} {% endfor %}
+                        {% if m.required is not empty %}<br>{{ t('MAIL_REQUIRED_PLACEHOLDERS') }}{% endif %}</p>
+                </div>
+            </div>
+            {% if m.custom %}
+                <label><input type="checkbox" name="mail_{{ kind }}_reset" value="1"> {{ t('LAYOUT_RESET') }}</label>
+            {% endif %}
+            <p><button type="button" class="lst-button" data-lst-mail-preview>{{ t('PREVIEW') }}</button></p>
+            <pre class="lst-mail-preview" hidden></pre>
+        </details>
+        {% endfor %}
+    </fieldset>
+
     <div class="lst-buttons">
         <button type="submit">{{ L_('TEXT:SAVE') }}</button>
     </div>

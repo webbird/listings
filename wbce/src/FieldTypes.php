@@ -14,7 +14,7 @@ defined('WB_PATH') or die('This file cannot be accessed directly!');
 final class FieldTypes
 {
     public const TYPES = [
-        'text', 'textarea', 'number', 'email', 'url', 'phone',
+        'text', 'textarea', 'html', 'number', 'email', 'url', 'phone',
         'date', 'datetime', 'select', 'radio', 'checkboxes', 'boolean',
         'image', 'gallery', 'file', 'heading',
     ];
@@ -22,7 +22,7 @@ final class FieldTypes
     public const CHOICE_TYPES = ['select', 'radio', 'checkboxes'];
 
     /** Default maximum length of text values. */
-    private const MAXLENGTH = ['text' => 255, 'textarea' => 10000];
+    private const MAXLENGTH = ['text' => 255, 'textarea' => 10000, 'html' => 20000];
 
     public static function isChoice(string $type): bool
     {
@@ -74,6 +74,16 @@ final class FieldTypes
                 return [null, L_('MOD_LISTINGS:ERR_REQUIRED', $label)];
             }
             return [$on, null];
+        }
+
+        if ($type === 'html') {
+            // stored reduced to the allowed tags; the layouts print it without escaping
+            $html = Html::clean(is_string($raw) ? $raw : '');
+            if ($html === '') {
+                return [null, $field['required'] ? L_('MOD_LISTINGS:ERR_REQUIRED', $label) : null];
+            }
+            $max = self::maxLength($field);
+            return mb_strlen($html) > $max ? [null, L_('MOD_LISTINGS:ERR_TOO_LONG', $label, $max)] : [$html, null];
         }
 
         $value = is_string($raw) ? trim(str_replace("\0", '', $raw)) : '';
@@ -163,6 +173,9 @@ final class FieldTypes
             return '';
         }
         switch ($field['type']) {
+            case 'html':
+                // the plain text; layouts get the HTML as <NAME>_HTML and F.HTML
+                return is_string($value) ? Html::text($value) : '';
             case 'boolean':
                 return $value ? L_('MOD_LISTINGS:YES') : '';
             case 'select':

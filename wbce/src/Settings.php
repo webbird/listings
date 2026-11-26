@@ -35,7 +35,20 @@ final class Settings
         'tags_mode'     => 'off',    // off | fixed (the admin's list) | open (owners add tags)
         'filter_form'   => '1',      // search and filter above the list
         'rss'           => '0',      // feed of the latest entries
+        // 1.1
+        'max_per_owner' => '0',      // confirmed entries per owner address or account; 0 = any number
+        'mails'         => '',       // own mail templates as JSON (Mail::checkTemplates()); '' = the defaults
+        'form_intro'    => '',       // own text above the form for new entries; '' = the default
     ];
+
+    public const FORM_INTRO_MAX = 2000;
+
+    public const MAX_PER_OWNER_LIMIT = 1000;
+
+    public static function maxPerOwner(array $settings): int
+    {
+        return max(0, min(self::MAX_PER_OWNER_LIMIT, (int) ($settings['max_per_owner'] ?? 0)));
+    }
 
     public const OWNER_MODES = ['email', 'account'];
 
@@ -135,6 +148,10 @@ final class Settings
         if (!ctype_digit($remind) || (int) $remind > 365) {
             $errors[] = L_('MOD_LISTINGS:ERR_REMIND');
         }
+        $maxOwner = $str('max_per_owner') === '' ? '0' : $str('max_per_owner');
+        if (!ctype_digit($maxOwner) || (int) $maxOwner > self::MAX_PER_OWNER_LIMIT) {
+            $errors[] = L_('MOD_LISTINGS:ERR_MAX_PER_OWNER', self::MAX_PER_OWNER_LIMIT);
+        }
         $values = [
             'per_page'     => ctype_digit($perPage) ? (string) (int) $perPage : $perPage,
             'sort'         => array_key_exists($str('sort'), self::SORTS) ? $str('sort') : 'newest',
@@ -142,6 +159,7 @@ final class Settings
             'owner_mode'   => in_array($str('owner_mode'), self::OWNER_MODES, true) ? $str('owner_mode') : 'email',
             'runtime_days' => ctype_digit($runtime) ? (string) (int) $runtime : $runtime,
             'remind_days'  => ctype_digit($remind) ? (string) (int) $remind : $remind,
+            'max_per_owner' => ctype_digit($maxOwner) ? (string) (int) $maxOwner : $maxOwner,
             'tags_mode'    => in_array($str('tags_mode'), Taxonomy::TAG_MODES, true) ? $str('tags_mode') : 'off',
         ];
         foreach (self::FLAGS as $flag) {

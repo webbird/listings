@@ -1,7 +1,7 @@
 {#
     listings/twig/modify.twig – frame of the backend views: tabs and main action (as in articles), messages, content
 #}
-{% set tabs = {items: ['TAB_ITEMS', ['item']], fields: ['TAB_FIELDS', ['field', 'presets']], categories: ['TAB_CATEGORIES', ['category']], layouts: ['TAB_LAYOUTS', []], settings: ['TAB_SETTINGS', ['import']]} %}
+{% set tabs = {items: ['TAB_ITEMS', ['item', 'log']], fields: ['TAB_FIELDS', ['field', 'presets']], categories: ['TAB_CATEGORIES', ['category']], layouts: ['TAB_LAYOUTS', []], settings: ['TAB_SETTINGS', ['import']]} %}
 <div class="mod_listings lst-backend" data-lst-section="{{ section_id }}">
     <div class="lst-head">
         <nav class="lst-tabs" aria-label="{{ t('TABS') }}">

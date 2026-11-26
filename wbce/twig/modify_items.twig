@@ -3,6 +3,7 @@
 #}
 {% extends 'modify.twig' %}
 {% block actions %}
+    <a class="lst-button" href="{{ url({lst_view: 'log'}) }}">{{ t('LOG_TITLE') }}</a>
     <a class="lst-button lst-button--primary" href="{{ url({lst_view: 'item'}) }}">{{ t('NEW_ITEM') }}</a>
 {% endblock %}
 {% block content %}
@@ -24,9 +25,11 @@
 {% if items is empty %}
     <p>{{ t('NO_ENTRIES') }}</p>
 {% else %}
-<table class="lst-table">
+<p class="lst-live" role="status" aria-live="polite" data-lst-live></p>
+<table class="lst-table lst-items">
     <thead>
         <tr>
+            <th class="lst-pick"><input type="checkbox" data-lst-pick-all aria-label="{{ t('PICK_ALL') }}"></th>
             <th>{{ t('TITLE') }}</th>
             <th>{{ t('STATUS') }}</th>
             <th>{{ t('UPDATED') }}</th>
@@ -41,6 +44,7 @@
         {% set key = idkey('item', item.item_id) %}
         {% set edit = url({lst_view: 'item', lst_item: item.item_id}) %}
         <tr{% if item.status == 'pending' %} class="lst-row-waiting"{% endif %}>
+            <td class="lst-pick"><input type="checkbox" name="lst_pick[]" value="{{ loop.index0 }}" form="lst_bulk_form" aria-label="{{ t('PICK', item.title) }}"></td>
             <td>
                 <a href="{{ edit }}">{{ item.title }}</a>
                 {% if item.owner_email != '' %}<br><span class="lst-help">{{ item.owner_email }}</span>{% endif %}
@@ -51,7 +55,7 @@
             <td class="lst-actions">
                 {% if item.status == 'pending' %}
                     {% for to, label in {published: 'APPROVE', rejected: 'REJECT'} %}
-                    <form method="post" action="{{ action }}">
+                    <form method="post" action="{{ action }}" data-lst-ajax>
                         {% include '_hidden.twig' %}
                         <input type="hidden" name="lst_action" value="item_status">
                         <input type="hidden" name="lst_status" value="{{ to }}">
@@ -72,6 +76,19 @@
     {% endfor %}
     </tbody>
 </table>
+{# the boxes above belong to this form by their form attribute; they name positions in lst_items, never IDs #}
+<form id="lst_bulk_form" method="post" action="{{ action }}" class="lst-bulk" data-lst-bulk data-lst-none="{{ t('ERR_NOTHING_PICKED') }}" data-lst-confirm-delete="{{ t('CONFIRM_BULK_DELETE') }}">
+    {% include '_hidden.twig' %}
+    <input type="hidden" name="lst_action" value="item_bulk">
+    <input type="hidden" name="lst_items" value="{{ idkey_list('items', items|map(x => x.item_id)) }}">
+    <label for="lst_bulk">{{ t('BULK_LABEL') }}</label>
+    <select id="lst_bulk" name="lst_bulk">
+        <option value="published">{{ t('BULK_PUBLISH') }}</option>
+        <option value="rejected">{{ t('BULK_REJECT') }}</option>
+        <option value="delete">{{ t('BULK_DELETE') }}</option>
+    </select>
+    <button type="submit" class="lst-button">{{ t('BULK_RUN') }}</button>
+</form>
 {% if pages > 1 %}
 <nav class="lst-pager">
     {% for p in 1..pages %}

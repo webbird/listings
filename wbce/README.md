@@ -2,7 +2,9 @@
 
 Seitenmodul für WBCE CMS 1.7: Verzeichnisse von Einträgen mit eigenen Feldern, die Besucher selbst anlegen und pflegen können, mit Freigabe durch den Admin. Beispiele sind Mitgliederlisten, Kleinanzeigen, Jobbörsen, Branchenbücher oder ein Addon-Repository. Listings ist der Nachfolger von wbProfiles und übernimmt dessen Daten per Import.
 
-- Feldsatz pro Verzeichnis, zusammengestellt im Backend, mit 16 Feldtypen, darunter Bild, Galerie und Datei
+- Feldsatz pro Verzeichnis, zusammengestellt im Backend, mit 17 Feldtypen, darunter formatierter Text, Bild, Galerie und Datei; Reihenfolge per Drag-and-drop
+- Massenaktionen, Freigabe ohne Neuladen, Protokoll aller Aktionen, Höchstzahl an Einträgen pro Inhaber
+- Mail-Texte und Text über dem Formular pro Verzeichnis änderbar, Vorschau für Layouts, Formular und Mails
 - Einträge vom Admin oder von Besuchern, ohne Konto (Bestätigung per E-Mail) oder mit Frontend-Konto
 - Freigabe, Laufzeit mit Erinnerung und Verlängerung, Kontaktformular an den Inhaber
 - Kategorien, Tags, Suche und Filter, RSS-Feed, Site-Suche, Links aus dem Editor
@@ -41,6 +43,7 @@ Jedes Feld hat eine Beschriftung, einen Namen (für die Layouts, nach den ersten
 | Typ | Eingabe | Optionen |
 |---|---|---|
 | Text; Text, mehrzeilig | Textfeld | Höchstlänge |
+| Formatierter Text | im Backend der Editor der Website, im Frontend ein schlanker Editor; gespeichert werden nur Absätze, fett, kursiv, Listen, Links und Zwischenüberschriften. Layouts: `F.HTML`, `ITEM.<NAME>_HTML` | Höchstlänge |
 | Zahl | Zahlenfeld | Minimum, Maximum |
 | E-Mail-Adresse, Webadresse, Telefonnummer | Textfeld mit Prüfung | Webadressen nur mit `http` oder `https` |
 | Datum, Datum und Uhrzeit | Datumsauswahl | |

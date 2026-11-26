@@ -10,7 +10,8 @@
     <h2>{{ is_new ? t('NEW_ENTRY') : t('EDIT_ITEM', item.title) }}</h2>
     {% include '_messages.twig' %}
     {% if is_new %}
-        <p class="lst-intro">{{ t(account ? (approval ? 'INTRO_NEW_ACCOUNT_APPROVAL' : 'INTRO_NEW_ACCOUNT') : (approval ? 'INTRO_NEW_APPROVAL' : 'INTRO_NEW')) }}</p>
+        {# the directory's own text (layouts tab), else the default for the way entries go online #}
+        <p class="lst-intro">{{ form_intro|default('') != '' ? form_intro|nl2br : t(account ? (approval ? 'INTRO_NEW_ACCOUNT_APPROVAL' : 'INTRO_NEW_ACCOUNT') : (approval ? 'INTRO_NEW_APPROVAL' : 'INTRO_NEW')) }}</p>
     {% else %}
         <p class="lst-intro">{{ t('INTRO_STATUS_' ~ item.status|upper) }}
             {% if item.expires_at > 0 %}{{ t(expired ? 'EXPIRED_ON' : 'EXPIRES_ON', item.expires_at|date('d.m.Y')) }}{% endif %}</p>

@@ -316,6 +316,28 @@ final class Items
         return array_map([self::class, 'decode'], $rows);
     }
 
+    /**
+     * Confirmed entries (not drafts) of an account ($userId) or an owner
+     * address, without $exceptId.
+     */
+    public static function countOwned(int $sectionId, string $email, int $userId, int $exceptId = 0): int
+    {
+        global $database;
+        if ($userId > 0) {
+            $where = '`owner_user_id` = ?';
+            $who = $userId;
+        } elseif ($email !== '') {
+            $where = '`owner_email` = ?';
+            $who = strtolower($email);
+        } else {
+            return 0;
+        }
+        return (int) $database->fetchValue(
+            'SELECT COUNT(*) FROM `' . self::TABLE . '` WHERE `section_id` = ? AND ' . $where . ' AND `status` <> ? AND `item_id` <> ?',
+            [$sectionId, $who, 'draft', $exceptId]
+        );
+    }
+
     /** Deletes frontend entries never confirmed; admin drafts have no owner address. */
     public static function purgeUnconfirmed(int $sectionId): void
     {
@@ -327,6 +349,7 @@ final class Items
         ), 'item_id');
         foreach ($ids as $id) {
             self::delete($sectionId, (int) $id);
+            Log::add($sectionId, (int) $id, 'purged', 'system');
         }
     }
 

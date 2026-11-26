@@ -1,0 +1,21 @@
+{#
+    listings/twig/modify_log.twig – what happened to the entries of the directory, newest first
+#}
+{% extends 'modify.twig' %}
+{% block content %}
+<p class="lst-back"><a href="{{ url({lst_view: 'items'}) }}">← {{ t('TAB_ITEMS') }}</a></p>
+<h3>{{ t('LOG_TITLE') }}</h3>
+<p class="lst-hint">{{ t('LOG_INTRO', keep_days) }}</p>
+{% if entries is empty %}
+    <p>{{ t('LOG_EMPTY') }}</p>
+{% else %}
+    {% include '_log_table.twig' %}
+    {% if pages > 1 %}
+    <nav class="lst-pager">
+        {% for p in 1..pages %}
+            {% if p == page %}<strong>{{ p }}</strong>{% else %}<a href="{{ url({lst_view: 'log', lst_page: p}) }}">{{ p }}</a>{% endif %}
+        {% endfor %}
+    </nav>
+    {% endif %}
+{% endif %}
+{% endblock %}

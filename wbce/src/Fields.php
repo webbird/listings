@@ -97,7 +97,7 @@ final class Fields
                 $errors[] = L_('MOD_LISTINGS:ERR_FIELD_CHOICES');
             }
         }
-        if ($type === 'text' || $type === 'textarea') {
+        if (in_array($type, ['text', 'textarea', 'html'], true)) {
             $maxlength = $str('maxlength');
             if ($maxlength !== '') {
                 if (!ctype_digit($maxlength) || (int) $maxlength < 1 || (int) $maxlength > 65535) {
@@ -230,6 +230,25 @@ final class Fields
         }
         // renumber all, so equal or missing positions cannot block the swap
         [$ids[$index], $ids[$other]] = [$ids[$other], $ids[$index]];
+        return self::reorder($sectionId, $ids);
+    }
+
+    /**
+     * Numbers the fields in the given order; $ids must be exactly the
+     * fields of the section (a list from another tab or an old page is refused).
+     *
+     * @param list<int> $ids
+     */
+    public static function reorder(int $sectionId, array $ids): bool
+    {
+        $current = array_map(static fn ($f) => (int) $f['field_id'], self::forSection($sectionId));
+        $sortedCurrent = $current;
+        $sortedIds = $ids;
+        sort($sortedCurrent);
+        sort($sortedIds);
+        if ($sortedCurrent !== $sortedIds) {
+            return false;
+        }
         try {
             $GLOBALS['database']->transaction(function (\Database $db) use ($ids, $sectionId) {
                 foreach ($ids as $position => $id) {
