@@ -57,6 +57,8 @@
 .lst-backend .lst-form-heading { margin: 1.5em 0 .6em; padding-bottom: .2em; border-bottom: 1px solid #ddd; }
 .lst-backend fieldset { margin: 1.5em 0; padding: .5em 1em 1em; border: 1px solid #ddd; }
 .lst-backend .lst-code { width: 100%; font-family: Consolas, Menlo, monospace; font-size: 13px; line-height: 1.45; tab-size: 4; }
+/* CodeMirror (core module CodeMirror_Config): stay inside the column, as in articles */
+.lst-backend .CodeMirror { contain: inline-size; }
 .lst-backend .lst-buttons { display: flex; gap: 1em; align-items: center; margin: 1.5em 0 0; }
 @media (max-width: 700px) { .lst-backend .lst-row { grid-template-columns: 1fr; } }
 .lst-backend .lst-status-pending { background: #fbf0d9; color: #6e4a07; }

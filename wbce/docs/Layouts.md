@@ -15,6 +15,8 @@ Beide Layouts sind Vorlagen im Format des LayoutParsers von WBCE. Platzhalter st
 
 Alle Platzhalter stehen auf der Seite [Platzhalter](Platzhalter.md), die Namen der eigenen Felder zusätzlich über den Layouts im Reiter. Werte werden automatisch escaped; nur formatierter Text kommt als HTML (`[F.HTML]`, `[ITEM.NAME_HTML]`), bereinigt beim Speichern. Layouts führen nie PHP aus und können keine Dateien einbinden.
 
+Ist das Kernmodul CodeMirror_Config installiert, zeigt der Reiter beide Layouts mit Syntaxhervorhebung; sonst sind es einfache Textfelder.
+
 Ein geändertes Layout trägt das Kennzeichen **geändert**. **Standard-Layout wiederherstellen** setzt es zurück; spätere Verbesserungen des Standards kommen dann wieder an. Ein Layout, das dem Standard gleicht, wird nicht gespeichert.
 
 Die Formulare für Besucher (Neuer Eintrag, Bearbeiten, Kontakt, Suche) erzeugt das Modul aus dem Feldsatz. Ihr Aussehen bestimmt `assets/frontend.css` bzw. das Template der Website.

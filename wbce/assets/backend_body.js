@@ -240,6 +240,12 @@ document.addEventListener('click', function (e) {
     }
     e.preventDefault();
     var form = button.form;
+    // CodeMirror writes back into its textarea only on submit; the preview sends earlier
+    form.querySelectorAll('.CodeMirror').forEach(function (el) {
+        if (el.CodeMirror) {
+            el.CodeMirror.save();
+        }
+    });
     var data = new FormData(form);
     data.set('lst_preview', button.value);
     var dialog = document.getElementById('lst_preview_dialog');

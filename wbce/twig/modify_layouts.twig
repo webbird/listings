@@ -19,7 +19,8 @@
             {{ t('LAYOUT_' ~ name|upper) }}
             <span class="lst-badge">{{ t(custom[name] ? 'LAYOUT_CUSTOM' : 'LAYOUT_DEFAULT') }}</span>
         </legend>
-        <textarea name="layout_{{ name }}" rows="18" class="lst-code" spellcheck="false">{{ layout }}</textarea>
+        {# the id is where CodeEditor (core module CodeMirror_Config) attaches the highlighting #}
+        <textarea name="layout_{{ name }}" id="lst-layout-{{ name }}-{{ section_id }}" rows="18" class="lst-code" spellcheck="false" aria-label="{{ t('LAYOUT_' ~ name|upper) }}">{{ layout }}</textarea>
         {% if custom[name] %}
             <label><input type="checkbox" name="reset_{{ name }}" value="1"> {{ t('LAYOUT_RESET') }}</label>
         {% endif %}

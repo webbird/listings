@@ -195,6 +195,10 @@ final class Backend
                 foreach (Layouts::NAMES as $name) {
                     $vars['layouts'][$name] = $vars['old']['layout_' . $name] ?? Layouts::get($settings, $name);
                     $vars['custom'][$name] = trim($settings['layout_' . $name]) !== '';
+                    // syntax highlighting from the core module CodeMirror_Config (as in articles), plain textareas without it
+                    if (class_exists('CodeEditor')) {
+                        \CodeEditor::init('lst-layout-' . $name . '-' . $sectionId, 'htt', ['height' => 'auto', 'toolbar' => false]);
+                    }
                 }
                 $vars['form_intro'] = $vars['old']['form_intro'] ?? $settings['form_intro'];
                 $vars['form_intro_max'] = Settings::FORM_INTRO_MAX;
