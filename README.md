@@ -11,6 +11,8 @@ Seitenmodul für WBCE CMS 1.7: Verzeichnisse von Einträgen mit eigenen Feldern,
 | `wbce/twig/` | Backend-Ansichten (`modify_*.twig`) und Formulare im Frontend (`view_*.twig`) |
 | `wbce/layouts/` | Standard-Layouts für Liste und Detail (LayoutParser, im Backend änderbar) |
 | `wbce/presets/` | Mitgelieferte Vorlagen |
+| `wbce/assets/` | CSS und JavaScript für Backend und Frontend (lädt der Kern) |
+| `wbce/docs/` | Online-Hilfe, im Backend über den Knopf Hilfe |
 
 ## Entwicklung
 

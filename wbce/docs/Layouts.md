@@ -17,7 +17,7 @@ Alle Platzhalter stehen auf der Seite [Platzhalter](Platzhalter.md), die Namen d
 
 Ein geändertes Layout trägt das Kennzeichen **geändert**. **Standard-Layout wiederherstellen** setzt es zurück; spätere Verbesserungen des Standards kommen dann wieder an. Ein Layout, das dem Standard gleicht, wird nicht gespeichert.
 
-Die Formulare für Besucher (Neuer Eintrag, Bearbeiten, Kontakt, Suche) erzeugt das Modul aus dem Feldsatz. Ihr Aussehen bestimmt `frontend.css` bzw. das Template der Website.
+Die Formulare für Besucher (Neuer Eintrag, Bearbeiten, Kontakt, Suche) erzeugt das Modul aus dem Feldsatz. Ihr Aussehen bestimmt `assets/frontend.css` bzw. das Template der Website.
 
 ## Text über dem Formular
 

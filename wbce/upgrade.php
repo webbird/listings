@@ -31,3 +31,10 @@ if (!$database->addIndex('{TP}mod_listings_items', 'owner_user', 'section_id, ow
 if (!$database->addField('{TP}mod_listings_fields', 'filterable', 'TINYINT NOT NULL DEFAULT 0')) {
     log_err('Listings: ' . $database->getError());
 }
+
+// 1.1.1: CSS and JS moved to assets/; the copies an update leaves in the module folder go
+foreach (['backend.css', 'backend_body.js', 'frontend.css', 'frontend_body.js'] as $listingsAsset) {
+    if (is_file(__DIR__ . '/assets/' . $listingsAsset) && is_file(__DIR__ . '/' . $listingsAsset)) {
+        @unlink(__DIR__ . '/' . $listingsAsset);
+    }
+}

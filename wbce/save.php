@@ -304,7 +304,7 @@ switch ($post('lst_action')) {
             header('X-Robots-Tag: noindex');
             echo '<!DOCTYPE html><html lang="', h(strtolower(LANGUAGE)), '"><head><meta charset="utf-8">',
                 '<meta name="viewport" content="width=device-width, initial-scale=1"><title>', h(L_('MOD_LISTINGS:PREVIEW')), '</title>',
-                '<link rel="stylesheet" href="', h(WB_URL . '/modules/' . Module::DIR . '/frontend.css'), '">',
+                '<link rel="stylesheet" href="', h(WB_URL . '/modules/' . Module::DIR . '/assets/frontend.css'), '">',
                 '<style>body{font-family:system-ui,sans-serif;max-width:60rem;margin:0 auto;padding:1rem 1.5rem;line-height:1.5}',
                 '.lst-preview-note{margin:0 0 1.5rem;padding:.5rem .75rem;background:#fff4d6;border-left:3px solid #c80}</style></head><body>',
                 '<p class="lst-preview-note">', h(L_('MOD_LISTINGS:PREVIEW_NOTE')), '</p>', $html, '</body></html>';
