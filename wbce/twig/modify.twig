@@ -14,7 +14,7 @@
                 </a>
             {% endfor %}
         </nav>
-        <div class="lst-head-actions">{% block actions %}{% endblock %}</div>
+        <div class="lst-head-actions">{{ help_link|raw }}{% block actions %}{% endblock %}</div>
     </div>
     {% include '_messages.twig' %}
     {% block content %}{% endblock %}

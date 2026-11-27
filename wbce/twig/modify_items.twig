@@ -77,17 +77,20 @@
     </tbody>
 </table>
 {# the boxes above belong to this form by their form attribute; they name positions in lst_items, never IDs #}
-<form id="lst_bulk_form" method="post" action="{{ action }}" class="lst-bulk" data-lst-bulk data-lst-none="{{ t('ERR_NOTHING_PICKED') }}" data-lst-confirm-delete="{{ t('CONFIRM_BULK_DELETE') }}">
+<form id="lst_bulk_form" method="post" action="{{ action }}" data-lst-bulk data-lst-none="{{ t('ERR_NOTHING_PICKED') }}" data-lst-confirm-delete="{{ t('CONFIRM_BULK_DELETE') }}">
     {% include '_hidden.twig' %}
     <input type="hidden" name="lst_action" value="item_bulk">
     <input type="hidden" name="lst_items" value="{{ idkey_list('items', items|map(x => x.item_id)) }}">
-    <label for="lst_bulk">{{ t('BULK_LABEL') }}</label>
-    <select id="lst_bulk" name="lst_bulk">
+    <fieldset class="lst-bulk">
+        <legend>{{ t('BULK_LABEL') }}</legend>
+        <label for="lst_bulk">{{ t('BULK_ACTION') }}</label>
+        <select id="lst_bulk" name="lst_bulk">
         <option value="published">{{ t('BULK_PUBLISH') }}</option>
         <option value="rejected">{{ t('BULK_REJECT') }}</option>
         <option value="delete">{{ t('BULK_DELETE') }}</option>
-    </select>
-    <button type="submit" class="lst-button">{{ t('BULK_RUN') }}</button>
+        </select>
+        <button type="submit" class="lst-button">{{ t('BULK_RUN') }}</button>
+    </fieldset>
 </form>
 {% if pages > 1 %}
 <nav class="lst-pager">

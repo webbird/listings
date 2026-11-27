@@ -38,12 +38,20 @@ final class Backend
             'page_id'    => $pageId,
             'section_id' => $sectionId,
             'view'       => $view,
-            'action'     => Module::saveUrl(),
-            'errors'     => is_array($flash['errors'] ?? null) ? $flash['errors'] : [],
+            // the IDs in the URL as well: a POST above post_max_size arrives without its fields (save.php)
+            'action'     => Module::saveUrl() . '?' . http_build_query(['page_id' => $pageId, 'section_id' => $sectionId], '', '&'),
+            'errors'     => array_merge(
+                is_array($flash['errors'] ?? null) ? $flash['errors'] : [],
+                $param('lst_error') === 'post_too_large' ? [L_('MOD_LISTINGS:ERR_POST_SIZE', Files::formatSize(Files::maxPostBytes()))] : []
+            ),
             'old'        => is_array($flash['old'] ?? null) ? $flash['old'] : null,
             'now'        => time(),
             // shown at the tab "Entries" in every view
             'waiting'    => Items::count($sectionId, 'pending'),
+            // docs/ in the markdown reader of WBCE (core module MarkdownWbce), tabs from docs/md_reader.json
+            'help_link'  => class_exists('MdReaderLink')
+                ? \MdReaderLink::dir('/modules/' . Module::DIR . '/docs/')->title('Listings')->linkHtml(L_('MOD_LISTINGS:HELP'), 'lst-button')
+                : '',
         ];
 
         $vars['fields'] = Fields::forSection($sectionId);

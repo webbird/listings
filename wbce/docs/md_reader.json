@@ -1,0 +1,15 @@
+{
+    "title": "Listings",
+    "docs": [
+        { "file": "README.md",                 "label": "Übersicht" },
+        { "file": "Eintraege.md",              "label": "Einträge" },
+        { "file": "Felder.md",                 "label": "Felder" },
+        { "file": "Besucher.md",               "label": "Einträge von Besuchern" },
+        { "file": "Kategorien-und-Tags.md",    "label": "Kategorien und Tags" },
+        { "file": "Layouts.md",                "label": "Layouts und Mails" },
+        { "file": "Platzhalter.md",            "label": "Platzhalter" },
+        { "file": "Einstellungen.md",          "label": "Einstellungen" },
+        { "file": "Vorlagen-und-Import.md",    "label": "Vorlagen und Import" },
+        { "file": "Technik.md",                "label": "Dateien, RSS, Suche" }
+    ]
+}

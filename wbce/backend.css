@@ -34,15 +34,15 @@
 /* a marked row as an edge stripe, not as a background */
 .lst-backend .lst-row-waiting td:first-child { box-shadow: inset 3px 0 0 var(--lst-accent); }
 .lst-backend .lst-table { width: 100%; border-collapse: collapse; }
-.lst-backend .lst-table th, .lst-backend .lst-table td { padding: .4em .5em; border-bottom: 1px solid #e3e3e3; text-align: left; vertical-align: middle; }
+.lst-backend .lst-table th, .lst-backend .lst-table td { text-align: left; padding: .45em .5em; border-bottom: 1px solid var(--lst-line); vertical-align: top; }
 .lst-backend .lst-heading-row td { background: #f6f6f6; font-weight: 600; }
 .lst-backend .lst-actions { white-space: nowrap; text-align: right; }
 .lst-backend .lst-actions form, .lst-backend .lst-move form { display: inline; margin: 0; }
 .lst-backend .lst-move { width: 3em; white-space: nowrap; }
 .lst-backend .lst-link-button { background: none; border: 0; padding: 0 .25em; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
-.lst-backend .lst-status { padding: .1em .5em; border-radius: 3px; font-size: .875em; }
-.lst-backend .lst-status-published { background: #e3f4e4; }
-.lst-backend .lst-status-draft { background: #eee; }
+.lst-backend .lst-status { border-radius: 3px; padding: .15em .6em; font-size: .85em; }
+.lst-backend .lst-status-published { background: #e3f1e6; color: #1d5a2b; }
+.lst-backend .lst-status-draft { background: #eceef1; color: #4b525c; }
 .lst-backend .lst-expired { color: #b00; }
 .lst-backend .lst-pager { margin: 1em 0; display: flex; gap: .6em; }
 .lst-backend .lst-form { max-width: 960px; }
@@ -59,8 +59,8 @@
 .lst-backend .lst-code { width: 100%; font-family: Consolas, Menlo, monospace; font-size: 13px; line-height: 1.45; tab-size: 4; }
 .lst-backend .lst-buttons { display: flex; gap: 1em; align-items: center; margin: 1.5em 0 0; }
 @media (max-width: 700px) { .lst-backend .lst-row { grid-template-columns: 1fr; } }
-.lst-backend .lst-status-pending { background: #fff1cc; }
-.lst-backend .lst-status-rejected { background: #f8dede; }
+.lst-backend .lst-status-pending { background: #fbf0d9; color: #6e4a07; }
+.lst-backend .lst-status-rejected { background: #fbe4e4; color: #7a1f1f; }
 .lst-backend .lst-actions .lst-button { padding: .15em .6em; margin-right: .25em; cursor: pointer; background: #fff; font: inherit; }
 .lst-backend .lst-actions .lst-approve { border-color: #3a8a4a; color: #2c6b38; }
 .lst-backend .lst-actions .lst-reject { border-color: #b33; color: #a22; }
@@ -80,7 +80,8 @@
 .lst-backend .lst-file-remove { font-size: .875em; }
 /* 1.1: bulk actions, sorting, log, HTML editor, mail templates */
 .lst-backend .lst-pick { width: 1.5em; }
-.lst-backend .lst-bulk { display: flex; flex-wrap: wrap; gap: .5em; align-items: center; margin: .75em 0; }
+.lst-backend .lst-bulk { display: flex; flex-wrap: wrap; gap: .6em 1em; align-items: flex-end; border: 1px solid var(--lst-line); background: #f6f7f9; padding: .6em 1em; margin: .75em 0; }
+.lst-backend .lst-bulk > :not(legend) { font-size: .9em; margin: 0; }
 .lst-backend .lst-live:empty { display: none; }
 .lst-backend .lst-live { margin: .5em 0; padding: .4em .75em; border-left: 3px solid #3a8a4a; background: rgba(58, 138, 74, .08); }
 .lst-backend [draggable="true"] { cursor: grab; }
