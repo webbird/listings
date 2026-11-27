@@ -511,7 +511,6 @@ final class Files
      */
     private static function isPublic(array $file, array $item): bool
     {
-        global $database;
         if ($item['status'] !== 'published' || ($item['expires_at'] > 0 && $item['expires_at'] <= time())) {
             return false;
         }
@@ -525,22 +524,7 @@ final class Files
         if ($field === null || $field['visibility'] !== 'public' || !self::isUpload($field['type'])) {
             return false;
         }
-        $section = $database->fetchRow(
-            'SELECT `page_id`, `publ_start`, `publ_end` FROM `{TP}sections` WHERE `section_id` = ? AND `module` = ?',
-            [$file['section_id'], Module::DIR]
-        );
-        $now = time();
-        if ($section === null
-            || ((int) $section['publ_start'] !== 0 && $now < (int) $section['publ_start'])
-            || ((int) $section['publ_end'] !== 0 && $now > (int) $section['publ_end'])) {
-            return false;
-        }
-        $page = $database->fetchRow('SELECT * FROM `{TP}pages` WHERE `page_id` = ?', [(int) $section['page_id']]);
-        if ($page === null) {
-            return false;
-        }
-        $wb = $GLOBALS['wb'] ?? new \Frontend();
-        return (bool) $wb->page_is_visible($page);
+        return Module::visiblePage($file['section_id']) !== null;
     }
 
     /**

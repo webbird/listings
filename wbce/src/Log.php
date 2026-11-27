@@ -46,13 +46,6 @@ final class Log
         }
     }
 
-    /** The logged-in backend user, or 0. */
-    public static function adminId(): int
-    {
-        $admin = $GLOBALS['admin'] ?? null;
-        return $admin instanceof \Wbce ? (int) $admin->get_user_id() : 0;
-    }
-
     /**
      * @return list<array<string, mixed>> newest first, with the user's display name
      */

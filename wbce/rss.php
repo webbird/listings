@@ -29,21 +29,10 @@ $notFound = static function (): never {
     http_response_code(404);
     exit;
 };
-$section = $database->fetchRow(
-    'SELECT `page_id`, `publ_start`, `publ_end` FROM `{TP}sections` WHERE `section_id` = ? AND `module` = ?',
-    [$sectionId, Module::DIR]
-) ?? $notFound();
-$now = time();
-if (((int) $section['publ_start'] !== 0 && $now < (int) $section['publ_start']) || ((int) $section['publ_end'] !== 0 && $now > (int) $section['publ_end'])) {
-    $notFound();
-}
 $settings = Settings::load($sectionId);
 Settings::on($settings, 'rss') || $notFound();
-
-$pageId = (int) $section['page_id'];
-$wb = new Frontend();
-$page = $database->fetchRow('SELECT * FROM `{TP}pages` WHERE `page_id` = ?', [$pageId]) ?? $notFound();
-$wb->page_is_visible($page) || $notFound();
+$page = Module::visiblePage($sectionId) ?? $notFound();
+$pageId = (int) $page['page_id'];
 
 $pageUrl = Module::pageUrl($pageId);
 $fields = Module::publicFields($sectionId);

@@ -143,6 +143,28 @@ final class Module
     }
 
     /**
+     * The page row of a listings section a visitor may see: the section is
+     * inside its publication period and the page is visible to them. Null otherwise.
+     */
+    public static function visiblePage(int $sectionId): ?array
+    {
+        global $database;
+        $section = $database->fetchRow(
+            'SELECT `page_id`, `publ_start`, `publ_end` FROM `{TP}sections` WHERE `section_id` = ? AND `module` = ?',
+            [$sectionId, self::DIR]
+        );
+        $now = time();
+        if ($section === null
+            || ((int) $section['publ_start'] !== 0 && $now < (int) $section['publ_start'])
+            || ((int) $section['publ_end'] !== 0 && $now > (int) $section['publ_end'])) {
+            return null;
+        }
+        $page = $database->fetchRow('SELECT * FROM `{TP}pages` WHERE `page_id` = ?', [(int) $section['page_id']]);
+        $wb = $GLOBALS['wb'] ?? new \Frontend();
+        return $page !== null && $wb->page_is_visible($page) ? $page : null;
+    }
+
+    /**
      * A request by a script (fetch, XHR, htmx). Uses BackendAjax where the
      * core has it; some 1.7 builds do not yet.
      */
